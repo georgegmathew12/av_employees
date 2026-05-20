@@ -14,8 +14,9 @@ models:
         tests:
           - not_null
           - relationships:
-              to: ref('bronze_titles')
-              field: title_id
+              arguments:
+                to: ref('bronze_titles')
+                field: title_id
       - name: birth_date
         tests:
           - not_null
@@ -25,7 +26,8 @@ models:
       - name: gender
         tests:
           - accepted_values:
-              values: ['M', 'F']
+              arguments:
+                values: ['M', 'F']
 
   - name: bronze_departments
     description: One row per department. Sourced from GOOGLE_DRIVE.departments.
@@ -49,8 +51,9 @@ models:
           - not_null
           - unique
           - relationships:
-              to: ref('bronze_employees')
-              field: employee_id
+              arguments:
+                to: ref('bronze_employees')
+                field: employee_id
       - name: exit_date
         tests:
           - not_null
@@ -59,39 +62,45 @@ models:
     description: Employee-to-department assignments. Sourced from GOOGLE_DRIVE.dept_emp.
     tests:
       - dbt_utils.unique_combination_of_columns:
-          combination_of_columns: [employee_id, department_id]
+          arguments:
+            combination_of_columns: [employee_id, department_id]
     columns:
       - name: employee_id
         tests:
           - not_null
           - relationships:
-              to: ref('bronze_employees')
-              field: employee_id
+              arguments:
+                to: ref('bronze_employees')
+                field: employee_id
       - name: department_id
         tests:
           - not_null
           - relationships:
-              to: ref('bronze_departments')
-              field: department_id
+              arguments:
+                to: ref('bronze_departments')
+                field: department_id
 
   - name: bronze_dept_manager
     description: Department-to-manager assignments. Sourced from GOOGLE_DRIVE.dept_manager.
     tests:
       - dbt_utils.unique_combination_of_columns:
-          combination_of_columns: [department_id, employee_id]
+          arguments:
+            combination_of_columns: [department_id, employee_id]
     columns:
       - name: department_id
         tests:
           - not_null
           - relationships:
-              to: ref('bronze_departments')
-              field: department_id
+              arguments:
+                to: ref('bronze_departments')
+                field: department_id
       - name: employee_id
         tests:
           - not_null
           - relationships:
-              to: ref('bronze_employees')
-              field: employee_id
+              arguments:
+                to: ref('bronze_employees')
+                field: employee_id
 
   - name: bronze_salaries
     description: Salary by employee. Sourced from GOOGLE_DRIVE.salaries.
@@ -100,8 +109,9 @@ models:
         tests:
           - not_null
           - relationships:
-              to: ref('bronze_employees')
-              field: employee_id
+              arguments:
+                to: ref('bronze_employees')
+                field: employee_id
       - name: salary
         tests:
           - not_null
