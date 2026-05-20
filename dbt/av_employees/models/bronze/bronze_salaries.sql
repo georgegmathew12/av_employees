@@ -1,4 +1,5 @@
-
+-- Bronze: drop _line, rename _fivetran_synced to loaded_at,
+-- rename emp_no to employee_id for downstream consistency.
 
 with source as (
 
@@ -9,14 +10,12 @@ with source as (
 renamed as (
 
     select
-        _line,
-        _fivetran_synced,
-        emp_no,
-        salary
+        emp_no              as employee_id,
+        salary,
+        _fivetran_synced    as loaded_at
 
     from source
 
 )
 
 select * from renamed
-

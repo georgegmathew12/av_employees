@@ -1,4 +1,4 @@
-
+-- Bronze: drop _line, rename _fivetran_synced to loaded_at. Column names already consistent.
 
 with source as (
 
@@ -9,14 +9,12 @@ with source as (
 renamed as (
 
     select
-        _line,
-        _fivetran_synced,
         title_id,
-        title
+        title,
+        _fivetran_synced    as loaded_at
 
     from source
 
 )
 
 select * from renamed
-
