@@ -1,0 +1,119 @@
+version: 2
+
+models:
+  - name: bronze_employees
+    description: One row per employee. Sourced from GOOGLE_DRIVE.employees.
+    columns:
+      - name: employee_id
+        description: Primary key.
+        tests:
+          - not_null
+          - unique
+      - name: title_id
+        description: Foreign key to bronze_titles.
+        tests:
+          - not_null
+          - relationships:
+              to: ref('bronze_titles')
+              field: title_id
+      - name: birth_date
+        tests:
+          - not_null
+      - name: hire_date
+        tests:
+          - not_null
+      - name: gender
+        tests:
+          - accepted_values:
+              values: ['M', 'F']
+
+  - name: bronze_departments
+    description: One row per department. Sourced from GOOGLE_DRIVE.departments.
+    columns:
+      - name: department_id
+        description: Primary key.
+        tests:
+          - not_null
+          - unique
+      - name: department_name
+        tests:
+          - not_null
+          - unique
+
+  - name: bronze_departures
+    description: One row per employee exit. Sourced from GOOGLE_DRIVE.departures.
+    columns:
+      - name: employee_id
+        description: Primary key.
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              to: ref('bronze_employees')
+              field: employee_id
+      - name: exit_date
+        tests:
+          - not_null
+
+  - name: bronze_dept_emp
+    description: Employee-to-department assignments. Sourced from GOOGLE_DRIVE.dept_emp.
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [employee_id, department_id]
+    columns:
+      - name: employee_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('bronze_employees')
+              field: employee_id
+      - name: department_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('bronze_departments')
+              field: department_id
+
+  - name: bronze_dept_manager
+    description: Department-to-manager assignments. Sourced from GOOGLE_DRIVE.dept_manager.
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [department_id, employee_id]
+    columns:
+      - name: department_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('bronze_departments')
+              field: department_id
+      - name: employee_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('bronze_employees')
+              field: employee_id
+
+  - name: bronze_salaries
+    description: Salary by employee. Sourced from GOOGLE_DRIVE.salaries.
+    columns:
+      - name: employee_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('bronze_employees')
+              field: employee_id
+      - name: salary
+        tests:
+          - not_null
+
+  - name: bronze_titles
+    description: Distinct job titles. Sourced from GOOGLE_DRIVE.titles.
+    columns:
+      - name: title_id
+        description: Primary key.
+        tests:
+          - not_null
+          - unique
+      - name: title
+        tests:
+          - not_null
