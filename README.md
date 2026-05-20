@@ -9,27 +9,46 @@ Source System  →  Fivetran  →  Snowflake (raw)  →  dbt  →  Snowflake (br
 ```
 
 - **Extract + Load:** Fivetran replicates source data into Snowflake.
-- **Transform:** dbt models the raw data into bronze (raw cleaned), silver (conformed), and gold (business-ready) layers.
+- **Transform:** dbt models the raw data into bronze (1:1 cleaned), silver (conformed entities), and gold (business marts).
 
 ## Repo layout
 
 ```
 av_employees/
-├── fivetran/   # Connector config-as-code, source documentation
-├── dbt/        # dbt project (models, tests, macros)
-└── docs/       # Diagrams, decisions, notes
+├── fivetran/           # Connector config-as-code, source docs
+├── dbt/
+│   └── av_employees/   # dbt project (models, tests, macros)
+├── docs/               # Diagrams, decisions, notes
+├── pyproject.toml      # Python deps (uv-managed)
+└── uv.lock             # Pinned dependency tree
 ```
 
 ## Setup
 
-1. Clone: `git clone https://github.com/georgegmathew12/av_employees.git`
-2. Copy `dbt/profiles.yml.example` → `~/.dbt/profiles.yml` and fill in Snowflake creds.
-3. From `dbt/`: `dbt deps && dbt debug` to confirm connectivity.
+Requires [uv](https://docs.astral.sh/uv/).
+
+1. Clone the repo and `cd` in.
+2. Install Python deps: `uv sync`
+3. Copy creds template: `cp dbt/profiles.yml.example ~/.dbt/profiles.yml`, then fill in Snowflake account/user/password/role/database/warehouse.
+4. Verify connection: `cd dbt/av_employees && uv run dbt debug` → should print "All checks passed!"
+
+## Running dbt
+
+From `dbt/av_employees/`:
+
+```bash
+uv run dbt build      # run models + tests
+uv run dbt run        # models only
+uv run dbt test       # tests only
+uv run dbt docs serve # auto-doc site
+```
 
 ## Status
 
 - [x] Fivetran → Snowflake raw load
-- [ ] dbt project initialized
+- [x] uv environment + dbt-snowflake installed
+- [x] dbt project initialized + connected to Snowflake
+- [ ] Sources defined (Fivetran raw tables)
 - [ ] Bronze layer
 - [ ] Silver layer
 - [ ] Gold layer
