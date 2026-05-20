@@ -1,0 +1,187 @@
+version: 2
+
+# Bronze tests are warnings by default — bronze faithfully mirrors raw,
+# so data-quality issues from upstream are expected and flagged for
+# silver to handle. The exception is `loaded_at`, which Fivetran always
+# populates; a null there indicates a broken pipeline and blocks the build.
+
+models:
+  - name: bronze_employees
+    description: One row per employee. Sourced from GOOGLE_DRIVE.employees.
+    columns:
+      - name: employee_id
+        description: Primary key.
+        tests:
+          - not_null:
+              config: { severity: warn }
+          - unique:
+              config: { severity: warn }
+      - name: title_id
+        description: Foreign key to bronze_titles.
+        tests:
+          - not_null:
+              config: { severity: warn }
+          - relationships:
+              config: { severity: warn }
+              arguments:
+                to: ref('bronze_titles')
+                field: title_id
+      - name: birth_date
+        tests:
+          - not_null:
+              config: { severity: warn }
+      - name: hire_date
+        tests:
+          - not_null:
+              config: { severity: warn }
+      - name: gender
+        tests:
+          - accepted_values:
+              config: { severity: warn }
+              arguments:
+                values: ['M', 'F']
+      - name: loaded_at
+        description: Fivetran sync timestamp; null indicates a broken pipeline.
+        tests:
+          - not_null
+
+  - name: bronze_departments
+    description: One row per department. Sourced from GOOGLE_DRIVE.departments.
+    columns:
+      - name: department_id
+        description: Primary key.
+        tests:
+          - not_null:
+              config: { severity: warn }
+          - unique:
+              config: { severity: warn }
+      - name: department_name
+        tests:
+          - not_null:
+              config: { severity: warn }
+          - unique:
+              config: { severity: warn }
+      - name: loaded_at
+        tests:
+          - not_null
+
+  - name: bronze_departures
+    description: One row per employee exit. Sourced from GOOGLE_DRIVE.departures.
+    columns:
+      - name: employee_id
+        description: Primary key.
+        tests:
+          - not_null:
+              config: { severity: warn }
+          - unique:
+              config: { severity: warn }
+          - relationships:
+              config: { severity: warn }
+              arguments:
+                to: ref('bronze_employees')
+                field: employee_id
+      - name: exit_date
+        tests:
+          - not_null:
+              config: { severity: warn }
+      - name: loaded_at
+        tests:
+          - not_null
+
+  - name: bronze_dept_emp
+    description: Employee-to-department assignments. Sourced from GOOGLE_DRIVE.dept_emp.
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          config: { severity: warn }
+          arguments:
+            combination_of_columns: [employee_id, department_id]
+    columns:
+      - name: employee_id
+        tests:
+          - not_null:
+              config: { severity: warn }
+          - relationships:
+              config: { severity: warn }
+              arguments:
+                to: ref('bronze_employees')
+                field: employee_id
+      - name: department_id
+        tests:
+          - not_null:
+              config: { severity: warn }
+          - relationships:
+              config: { severity: warn }
+              arguments:
+                to: ref('bronze_departments')
+                field: department_id
+      - name: loaded_at
+        tests:
+          - not_null
+
+  - name: bronze_dept_manager
+    description: Department-to-manager assignments. Sourced from GOOGLE_DRIVE.dept_manager.
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          config: { severity: warn }
+          arguments:
+            combination_of_columns: [department_id, employee_id]
+    columns:
+      - name: department_id
+        tests:
+          - not_null:
+              config: { severity: warn }
+          - relationships:
+              config: { severity: warn }
+              arguments:
+                to: ref('bronze_departments')
+                field: department_id
+      - name: employee_id
+        tests:
+          - not_null:
+              config: { severity: warn }
+          - relationships:
+              config: { severity: warn }
+              arguments:
+                to: ref('bronze_employees')
+                field: employee_id
+      - name: loaded_at
+        tests:
+          - not_null
+
+  - name: bronze_salaries
+    description: Salary by employee. Sourced from GOOGLE_DRIVE.salaries.
+    columns:
+      - name: employee_id
+        tests:
+          - not_null:
+              config: { severity: warn }
+          - relationships:
+              config: { severity: warn }
+              arguments:
+                to: ref('bronze_employees')
+                field: employee_id
+      - name: salary
+        tests:
+          - not_null:
+              config: { severity: warn }
+      - name: loaded_at
+        tests:
+          - not_null
+
+  - name: bronze_titles
+    description: Distinct job titles. Sourced from GOOGLE_DRIVE.titles.
+    columns:
+      - name: title_id
+        description: Primary key.
+        tests:
+          - not_null:
+              config: { severity: warn }
+          - unique:
+              config: { severity: warn }
+      - name: title
+        tests:
+          - not_null:
+              config: { severity: warn }
+      - name: loaded_at
+        tests:
+          - not_null
