@@ -8,10 +8,10 @@ profiles.yml
 !profiles.yml.example
 
 # dbt
-dbt/target/
-dbt/dbt_packages/
-dbt/logs/
-dbt/.user.yml
+target/
+dbt_packages/
+logs/
+.user.yml
 
 # Python
 __pycache__/
