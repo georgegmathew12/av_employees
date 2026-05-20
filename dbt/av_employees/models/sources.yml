@@ -1,0 +1,136 @@
+version: 2
+
+sources:
+  - name: google_drive
+    description: ""
+    tables:
+      - name: departments
+        description: ""
+        columns:
+          - name: _line
+            data_type: number
+            description: ""
+          - name: _fivetran_synced
+            data_type: timestamp_tz
+            description: ""
+          - name: dept_no
+            data_type: varchar
+            description: ""
+          - name: dept_name
+            data_type: varchar
+            description: ""
+
+      - name: departures
+        description: ""
+        columns:
+          - name: _line
+            data_type: number
+            description: ""
+          - name: _fivetran_synced
+            data_type: timestamp_tz
+            description: ""
+          - name: emp_no
+            data_type: number
+            description: ""
+          - name: exit_date
+            data_type: varchar
+            description: ""
+          - name: exit_reason
+            data_type: number
+            description: ""
+
+      - name: dept_emp
+        description: ""
+        columns:
+          - name: _line
+            data_type: number
+            description: ""
+          - name: _fivetran_synced
+            data_type: timestamp_tz
+            description: ""
+          - name: emp_no
+            data_type: number
+            description: ""
+          - name: dept_no
+            data_type: varchar
+            description: ""
+
+      - name: dept_manager
+        description: ""
+        columns:
+          - name: _line
+            data_type: number
+            description: ""
+          - name: _fivetran_synced
+            data_type: timestamp_tz
+            description: ""
+          - name: dept_no
+            data_type: varchar
+            description: ""
+          - name: emp_no
+            data_type: number
+            description: ""
+
+      - name: employees
+        description: ""
+        columns:
+          - name: _line
+            data_type: number
+            description: ""
+          - name: _fivetran_synced
+            data_type: timestamp_tz
+            description: ""
+          - name: emp_no
+            data_type: number
+            description: ""
+          - name: emp_title_id
+            data_type: varchar
+            description: ""
+          - name: birth_date
+            data_type: varchar
+            description: ""
+          - name: first_name
+            data_type: varchar
+            description: ""
+          - name: last_name
+            data_type: varchar
+            description: ""
+          - name: sex
+            data_type: varchar
+            description: ""
+          - name: hire_date
+            data_type: varchar
+            description: ""
+
+      - name: salaries
+        description: ""
+        columns:
+          - name: _line
+            data_type: number
+            description: ""
+          - name: _fivetran_synced
+            data_type: timestamp_tz
+            description: ""
+          - name: emp_no
+            data_type: number
+            description: ""
+          - name: salary
+            data_type: number
+            description: ""
+
+      - name: titles
+        description: ""
+        columns:
+          - name: _line
+            data_type: number
+            description: ""
+          - name: _fivetran_synced
+            data_type: timestamp_tz
+            description: ""
+          - name: title_id
+            data_type: varchar
+            description: ""
+          - name: title
+            data_type: varchar
+            description: ""
+
