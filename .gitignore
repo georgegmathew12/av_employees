@@ -1,0 +1,35 @@
+# Secrets / credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+profiles.yml
+!profiles.yml.example
+
+# dbt
+dbt/target/
+dbt/dbt_packages/
+dbt/logs/
+dbt/.user.yml
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# Terraform (if used for Fivetran)
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+*.swp
