@@ -1,0 +1,37 @@
+version: 2
+
+models:
+  - name: silver_int_employee
+    description: One row per employee with title, salary, and exit info. Department excluded — current dept unknowable from source.
+    tests:
+      - at_least_one_row
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "exit_date >= hire_date or exit_date is null"
+    columns:
+      - name: employee_id
+        tests: [unique]
+      - name: first_name
+        config:
+          meta: { pii: true }
+      - name: last_name
+        config:
+          meta: { pii: true }
+      - name: salary
+        config:
+          meta: { pii: true }
+
+  - name: silver_int_employee_department
+    description: Bridge table, one row per (employee, department) pair. Multiple rows per employee reflect dept history.
+    tests:
+      - at_least_one_row
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [employee_id, department_id]
+    columns:
+      - name: employee_id
+        tests:
+          - relationships:
+              arguments:
+                to: ref('silver_int_employee')
+                field: employee_id

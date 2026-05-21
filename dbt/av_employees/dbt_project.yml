@@ -34,3 +34,9 @@ models:
     bronze:
       +materialized: table
       +schema: bronze
+    silver:
+      +schema: silver
+      staging:
+        +materialized: view
+      intermediate:
+        +materialized: table

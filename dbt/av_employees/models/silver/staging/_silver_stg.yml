@@ -1,0 +1,179 @@
+version: 2
+
+models:
+  - name: silver_stg_employees
+    description: Cleaned employees, one row per employee.
+    tests:
+      - at_least_one_row
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "birth_date < hire_date"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "birth_date >= '1900-01-01'"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "hire_date <= current_date()"
+      - parse_success_rate:
+          arguments:
+            parsed_column: birth_date
+            source_model: ref('bronze_employees')
+            source_column: birth_date
+            key_column: employee_id
+      - parse_success_rate:
+          arguments:
+            parsed_column: hire_date
+            source_model: ref('bronze_employees')
+            source_column: hire_date
+            key_column: employee_id
+    columns:
+      - name: employee_id
+        tests: [not_null, unique]
+      - name: title_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('silver_stg_titles')
+                field: title_id
+      - name: birth_date
+        tests: [not_null]
+      - name: hire_date
+        tests: [not_null]
+      - name: gender
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['M', 'F']
+      - name: first_name
+        config:
+          meta: { pii: true }
+        tests: [not_null]
+      - name: last_name
+        config:
+          meta: { pii: true }
+        tests: [not_null]
+      - name: loaded_at
+        tests: [not_null]
+
+  - name: silver_stg_departures
+    description: Cleaned employee exits, one row per departed employee.
+    tests:
+      - at_least_one_row
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "exit_date <= current_date()"
+      - parse_success_rate:
+          arguments:
+            parsed_column: exit_date
+            source_model: ref('bronze_departures')
+            source_column: exit_date
+            key_column: employee_id
+    columns:
+      - name: employee_id
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('silver_stg_employees')
+                field: employee_id
+      - name: loaded_at
+        tests: [not_null]
+
+  - name: silver_stg_departments
+    description: Department lookup.
+    tests:
+      - at_least_one_row
+    columns:
+      - name: department_id
+        tests: [not_null, unique]
+      - name: department_name
+        tests: [not_null, unique]
+      - name: loaded_at
+        tests: [not_null]
+
+  - name: silver_stg_titles
+    description: Job title lookup.
+    tests:
+      - at_least_one_row
+    columns:
+      - name: title_id
+        tests: [not_null, unique]
+      - name: title
+        tests: [not_null]
+      - name: loaded_at
+        tests: [not_null]
+
+  - name: silver_stg_salaries
+    description: Current salary per employee, one row per employee.
+    tests:
+      - at_least_one_row
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "salary > 0"
+    columns:
+      - name: employee_id
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('silver_stg_employees')
+                field: employee_id
+      - name: salary
+        config:
+          meta: { pii: true }
+        tests: [not_null]
+      - name: loaded_at
+        tests: [not_null]
+
+  - name: silver_stg_dept_emp
+    description: Employee-to-department assignments, deduped on composite key. History grain (no date column available).
+    tests:
+      - at_least_one_row
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [employee_id, department_id]
+    columns:
+      - name: employee_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('silver_stg_employees')
+                field: employee_id
+      - name: department_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('silver_stg_departments')
+                field: department_id
+      - name: loaded_at
+        tests: [not_null]
+
+  - name: silver_stg_dept_manager
+    description: Department-to-manager assignments, deduped on composite key. History grain (no date column).
+    tests:
+      - at_least_one_row
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [department_id, employee_id]
+    columns:
+      - name: department_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('silver_stg_departments')
+                field: department_id
+      - name: employee_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('silver_stg_employees')
+                field: employee_id
+      - name: loaded_at
+        tests: [not_null]
