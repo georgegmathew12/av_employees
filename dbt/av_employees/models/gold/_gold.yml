@@ -1,0 +1,225 @@
+version: 2
+
+models:
+  - name: dim_date
+    description: Calendar date spine, 1985-01-01 through current_date + 1 year.
+    config:
+      contract: { enforced: true }
+    columns:
+      - name: date_id
+        description: Calendar date (PK).
+        data_type: date
+        constraints:
+          - type: not_null
+          - type: primary_key
+        tests: [not_null, unique]
+      - name: year
+        data_type: number
+        constraints: [{ type: not_null }]
+      - name: quarter
+        data_type: number
+        constraints: [{ type: not_null }]
+      - name: month
+        data_type: number
+        constraints: [{ type: not_null }]
+      - name: month_name
+        data_type: varchar
+        constraints: [{ type: not_null }]
+      - name: year_quarter
+        data_type: varchar
+        constraints: [{ type: not_null }]
+      - name: year_month
+        data_type: varchar
+        constraints: [{ type: not_null }]
+
+  - name: dim_employee
+    description: One row per employee. Includes demographics + generation bucket.
+    config:
+      contract: { enforced: true }
+    tests:
+      - at_least_one_row
+    columns:
+      - name: employee_id
+        data_type: number
+        constraints:
+          - type: not_null
+          - type: primary_key
+        tests: [not_null, unique]
+      - name: first_name
+        data_type: varchar
+        config: { meta: { pii: true } }
+        constraints: [{ type: not_null }]
+      - name: last_name
+        data_type: varchar
+        config: { meta: { pii: true } }
+        constraints: [{ type: not_null }]
+      - name: gender
+        data_type: varchar
+        constraints: [{ type: not_null }]
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['M', 'F']
+      - name: birth_date
+        data_type: date
+        constraints: [{ type: not_null }]
+      - name: generation_bucket
+        data_type: varchar
+        constraints: [{ type: not_null }]
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['Silent Generation', 'Baby Boomer', 'Generation X', 'Millennial', 'Generation Z', 'Generation Alpha']
+
+  - name: dim_department
+    description: Department lookup.
+    config:
+      contract: { enforced: true }
+    tests:
+      - at_least_one_row
+    columns:
+      - name: department_id
+        data_type: varchar
+        constraints:
+          - type: not_null
+          - type: primary_key
+        tests: [not_null, unique]
+      - name: department_name
+        data_type: varchar
+        constraints: [{ type: not_null }]
+        tests: [unique]
+
+  - name: dim_title
+    description: Job title lookup.
+    config:
+      contract: { enforced: true }
+    tests:
+      - at_least_one_row
+    columns:
+      - name: title_id
+        data_type: varchar
+        constraints:
+          - type: not_null
+          - type: primary_key
+        tests: [not_null, unique]
+      - name: title
+        data_type: varchar
+        constraints: [{ type: not_null }]
+
+  - name: dim_exit_reason
+    description: Exit reason codes. Label is "unknown (<code>)" until a decoder table is provided (see README gaps).
+    config:
+      contract: { enforced: true }
+    columns:
+      - name: exit_reason_code
+        data_type: number
+        constraints:
+          - type: not_null
+          - type: primary_key
+        tests: [not_null, unique]
+      - name: exit_reason_label
+        data_type: varchar
+        constraints: [{ type: not_null }]
+
+  - name: fct_employment
+    description: One row per employee employment span. Active and exited employees.
+    config:
+      contract: { enforced: true }
+    tests:
+      - at_least_one_row
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "exit_date >= hire_date or exit_date is null"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "tenure_days >= 0"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "salary > 0 or salary is null"
+    columns:
+      - name: employee_id
+        data_type: number
+        constraints:
+          - type: not_null
+          - type: primary_key
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('dim_employee')
+                field: employee_id
+      - name: title_id
+        data_type: varchar
+        constraints: [{ type: not_null }]
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_title')
+                field: title_id
+      - name: hire_date
+        data_type: date
+        constraints: [{ type: not_null }]
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_id
+      - name: exit_date
+        description: NULL for active employees.
+        data_type: date
+      - name: exit_reason_code
+        data_type: number
+      - name: salary
+        description: NULL when no salary record exists for the employee.
+        data_type: number
+        config: { meta: { pii: true } }
+      - name: tenure_days
+        description: Days from hire_date to exit_date (or to current_date if active).
+        data_type: number
+        constraints: [{ type: not_null }]
+      - name: tenure_bucket
+        data_type: varchar
+        constraints: [{ type: not_null }]
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['<1', '1-2', '2-3', '3-5', '>5']
+      - name: is_active
+        data_type: boolean
+        constraints: [{ type: not_null }]
+
+  - name: fct_employee_department
+    description: Bridge fact. One row per (employee, department). History grain — source has no dates, so dept-at-exit is unknowable (see README gaps).
+    config:
+      contract: { enforced: true }
+    tests:
+      - at_least_one_row
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [employee_id, department_id]
+    columns:
+      - name: employee_id
+        data_type: number
+        constraints: [{ type: not_null }]
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_employee')
+                field: employee_id
+      - name: department_id
+        data_type: varchar
+        constraints: [{ type: not_null }]
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_department')
+                field: department_id
+      - name: is_only_department
+        description: True when the employee has exactly one department in the bridge.
+        data_type: boolean
+        constraints: [{ type: not_null }]

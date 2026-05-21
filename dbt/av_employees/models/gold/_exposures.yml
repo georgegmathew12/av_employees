@@ -1,0 +1,22 @@
+version: 2
+
+exposures:
+  - name: tableau_employees
+    label: Tableau – Employees dashboard
+    type: dashboard
+    maturity: low
+    owner:
+      name: Analytics
+      email: analytics@example.com
+    description: |
+      Tableau dashboard covering: monthly/quarterly newcomers and leavers,
+      annual turnover, headcount, leavers by department, generation, and
+      tenure bucket, and exit reasons.
+    depends_on:
+      - ref('dim_employee')
+      - ref('dim_department')
+      - ref('dim_title')
+      - ref('dim_exit_reason')
+      - ref('dim_date')
+      - ref('fct_employment')
+      - ref('fct_employee_department')

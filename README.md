@@ -51,7 +51,7 @@ uv run dbt docs serve # auto-doc site
 - [x] Sources defined (Fivetran raw tables)
 - [x] Bronze layer
 - [x] Silver layer (staging + intermediate)
-- [ ] Gold layer
+- [x] Gold layer (star schema data mart)
 
 ## Known data gaps & assumptions
 
@@ -74,6 +74,34 @@ uv run dbt docs serve # auto-doc site
 - Silver contract: cleaned + joined data only, no derived columns or business defaults — those belong in gold
 - Bronze tests configured as warnings — data quality issues from upstream are expected; silver enforces strictness
 - `loaded_at` (renamed from `_fivetran_synced`) is the only blocking not_null test on bronze
+
+## Gold layer (data mart)
+
+Star schema in `gold` schema, consumed by Tableau analysts. All models materialized as tables with enforced contracts (column types locked).
+
+**Dims:** `dim_employee`, `dim_department`, `dim_title`, `dim_exit_reason`, `dim_date`
+**Facts:** `fct_employment` (1 row/employee), `fct_employee_department` (bridge)
+
+### Gold data gaps
+
+| Gap | What's needed to fix | Once fixed | Workaround today |
+|---|---|---|---|
+| Location | source column on `employees` (or office-assignment table with dates) | add `dim_location` + `location_id` FK on `fct_employment` | "leavers by location" omitted from dashboard |
+| Exit reason decoder | lookup table (code → label, category) | populate `dim_exit_reason.exit_reason_label`; no schema change needed | label = `"unknown (<code>)"` |
+| Dept-at-exit | dates on `dept_emp` source | join `fct_employment.exit_date` to dated bridge, store `exit_department_id` on the fact | `fct_employee_department.is_only_department` flag; dashboard filters to single-dept employees for clean dept-of-leaver charts |
+
+### Access (analyst role)
+
+`dbt_project.yml` does not currently apply grants — the Snowflake `analyst_role` and downstream Tableau service account must be created first:
+
+```sql
+create role analyst_role;
+grant usage on database <db> to role analyst_role;
+grant usage on schema <db>.dbt_<user>_gold to role analyst_role;
+grant select on all tables in schema <db>.dbt_<user>_gold to role analyst_role;
+```
+
+Once the role exists, add `+grants: { select: ["analyst_role"] }` under the `gold:` block in `dbt_project.yml` so future builds re-apply the grant automatically.
 
 ### PII
 
