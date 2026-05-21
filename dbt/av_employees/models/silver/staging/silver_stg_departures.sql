@@ -1,6 +1,3 @@
--- Silver staging: filter fully-null rows, parse exit_date with century pivot,
--- drop orphans (employee_ids not in silver_stg_employees).
-
 with bronze as (
 
     select * from {{ ref('bronze_departures') }}

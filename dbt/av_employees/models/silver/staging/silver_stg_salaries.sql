@@ -1,5 +1,3 @@
--- Silver staging: filter fully-null rows, drop orphans (employee_ids not in silver_stg_employees).
-
 with bronze as (
 
     select * from {{ ref('bronze_salaries') }}

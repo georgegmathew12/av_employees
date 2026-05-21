@@ -50,7 +50,7 @@ uv run dbt docs serve # auto-doc site
 - [x] dbt project initialized + connected to Snowflake
 - [x] Sources defined (Fivetran raw tables)
 - [x] Bronze layer
-- [ ] Silver layer (staging + intermediate, designed not built)
+- [x] Silver layer (staging + intermediate)
 - [ ] Gold layer
 
 ## Known data gaps & assumptions
@@ -60,13 +60,13 @@ uv run dbt docs serve # auto-doc site
 - `dept_emp` has multiple rows per employee but **no date columns** — "current department" is unknowable from this data
 - `dept_manager` has the same issue (no date columns) — "current manager" is unknowable
 - `employees` has ~777 fully-null rows from blank CSV lines; `departures` has ~17,637 — filtered out in silver_stg
-- `birth_date`, `hire_date`, `exit_date` are stored as VARCHAR in `MM/DD/YY` format — silver applies a dynamic century pivot (`YY > current_year → 1900s`, else 2000s); fails for employees aged 100+ but unrealistic
+- `birth_date`, `hire_date`, `exit_date` are stored as VARCHAR in `MM/DD/YY` format — silver applies a dynamic century pivot (`YY > current_year → 1900s`, else 2000s); fails for employees aged 100+ but unrealistic. Pivot also assumes hires/exits are only recorded once complete (no pre-announced future dates) — enforced by `hire_date <= current_date()` / `exit_date <= current_date()` tests
 - `exit_reason` is a NUMBER code with no decoder table provided
 - `gender` is assumed binary (`M`/`F`)
 - No `_fivetran_deleted` column — Google Drive connector dropped it in Aug 2019 (truncate-and-reload model)
 - `salaries` has one row per employee, treated as current salary (no salary history)
 - `titles` treated as a static lookup (no history)
-- **Referential integrity is broken in raw CSVs (accepted constraint)**: ~77% of `salaries` and `dept_emp` rows reference employee_ids that don't exist in the `employees` CSV. ELT preserves this faithfully (no data dropped in pipeline). Accepted as a source-data limitation; silver_stg FK tests fail by design until source is fixed.
+- **Referential integrity is broken in raw CSVs**: ~77% of `salaries` and `dept_emp` rows reference employee_ids that don't exist in the `employees` CSV. Bronze preserves this faithfully (no data dropped in ELT). Silver staging drops orphan rows via inner join to `silver_stg_employees`, so silver FK tests pass — the loss is documented here, not in the test output. If preserving orphans for analysis becomes important, switch the silver_stg inner joins to left joins and mark the `relationships` tests `severity: warn`.
 
 ### Modeling assumptions
 

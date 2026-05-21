@@ -1,7 +1,3 @@
--- Silver intermediate: 1 row per employee. Joins employees + titles lookup + salaries + departures.
--- Departments deliberately excluded — source has multi-row history but no date column, so "current dept" is unknowable.
--- Silver contract: cleaned + joined only. No derived columns or business defaults — those belong in gold.
-
 with employees as (
 
     select * from {{ ref('silver_stg_employees') }}

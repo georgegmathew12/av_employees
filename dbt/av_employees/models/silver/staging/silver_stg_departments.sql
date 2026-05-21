@@ -1,5 +1,3 @@
--- Silver staging: filter fully-null rows.
-
 with bronze as (
 
     select * from {{ ref('bronze_departments') }}
@@ -14,6 +12,7 @@ cleaned as (
         loaded_at
     from bronze
     where department_id is not null
+    qualify row_number() over (partition by department_id order by loaded_at desc) = 1
 
 )
 

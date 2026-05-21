@@ -1,7 +1,3 @@
--- Silver intermediate: bridge table, 1 row per (employee, department).
--- Preserves the multi-row history from dept_emp (no date column to dedupe to current).
--- Enriches with department_name so gold consumers don't need to re-join departments.
-
 with dept_emp as (
 
     select * from {{ ref('silver_stg_dept_emp') }}

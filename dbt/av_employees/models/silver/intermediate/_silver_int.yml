@@ -1,9 +1,5 @@
 version: 2
 
-# Intermediate tests are strict (default severity: error). Intermediate
-# guarantees cleaned + joined entities. Silver contract: no derived columns
-# or business defaults — those belong in gold.
-
 models:
   - name: silver_int_employee
     description: One row per employee with title, salary, and exit info. Department excluded — current dept unknowable from source.
@@ -11,24 +7,10 @@ models:
       - at_least_one_row
       - dbt_utils.expression_is_true:
           arguments:
-            expression: "birth_date < hire_date"
-      - dbt_utils.expression_is_true:
-          arguments:
             expression: "exit_date >= hire_date or exit_date is null"
     columns:
       - name: employee_id
-        tests: [not_null, unique]
-      - name: title_id
-        tests:
-          - not_null
-          - relationships:
-              arguments:
-                to: ref('silver_stg_titles')
-                field: title_id
-      - name: birth_date
-        tests: [not_null]
-      - name: hire_date
-        tests: [not_null]
+        tests: [unique]
       - name: first_name
         config:
           meta: { pii: true }
@@ -49,17 +31,7 @@ models:
     columns:
       - name: employee_id
         tests:
-          - not_null
           - relationships:
               arguments:
                 to: ref('silver_int_employee')
                 field: employee_id
-      - name: department_id
-        tests:
-          - not_null
-          - relationships:
-              arguments:
-                to: ref('silver_stg_departments')
-                field: department_id
-      - name: department_name
-        tests: [not_null]

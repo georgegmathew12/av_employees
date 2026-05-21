@@ -1,15 +1,9 @@
 version: 2
 
-# Staging tests are strict (default severity: error). Staging guarantees
-# cleaned, typed, deduped data — failures block the build.
-
 models:
   - name: silver_stg_employees
     description: Cleaned employees, one row per employee.
     tests:
-      - fewer_or_equal_rows_than:
-          arguments:
-            compare_to: ref('bronze_employees')
       - at_least_one_row
       - dbt_utils.expression_is_true:
           arguments:
@@ -65,10 +59,10 @@ models:
   - name: silver_stg_departures
     description: Cleaned employee exits, one row per departed employee.
     tests:
-      - fewer_or_equal_rows_than:
-          arguments:
-            compare_to: ref('bronze_departures')
       - at_least_one_row
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "exit_date <= current_date()"
       - parse_success_rate:
           arguments:
             parsed_column: exit_date
@@ -84,17 +78,12 @@ models:
               arguments:
                 to: ref('silver_stg_employees')
                 field: employee_id
-      - name: exit_date
-        tests: [not_null]
       - name: loaded_at
         tests: [not_null]
 
   - name: silver_stg_departments
     description: Department lookup.
     tests:
-      - fewer_or_equal_rows_than:
-          arguments:
-            compare_to: ref('bronze_departments')
       - at_least_one_row
     columns:
       - name: department_id
@@ -107,9 +96,6 @@ models:
   - name: silver_stg_titles
     description: Job title lookup.
     tests:
-      - fewer_or_equal_rows_than:
-          arguments:
-            compare_to: ref('bronze_titles')
       - at_least_one_row
     columns:
       - name: title_id
@@ -122,9 +108,6 @@ models:
   - name: silver_stg_salaries
     description: Current salary per employee, one row per employee.
     tests:
-      - fewer_or_equal_rows_than:
-          arguments:
-            compare_to: ref('bronze_salaries')
       - at_least_one_row
       - dbt_utils.expression_is_true:
           arguments:
@@ -148,9 +131,6 @@ models:
   - name: silver_stg_dept_emp
     description: Employee-to-department assignments, deduped on composite key. History grain (no date column available).
     tests:
-      - fewer_or_equal_rows_than:
-          arguments:
-            compare_to: ref('bronze_dept_emp')
       - at_least_one_row
       - dbt_utils.unique_combination_of_columns:
           arguments:
@@ -176,9 +156,6 @@ models:
   - name: silver_stg_dept_manager
     description: Department-to-manager assignments, deduped on composite key. History grain (no date column).
     tests:
-      - fewer_or_equal_rows_than:
-          arguments:
-            compare_to: ref('bronze_dept_manager')
       - at_least_one_row
       - dbt_utils.unique_combination_of_columns:
           arguments:

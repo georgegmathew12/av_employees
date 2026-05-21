@@ -1,5 +1,3 @@
--- Silver staging: filter fully-null rows, parse VARCHAR dates with century pivot.
-
 with bronze as (
 
     select * from {{ ref('bronze_employees') }}
@@ -9,16 +7,17 @@ with bronze as (
 cleaned as (
 
     select
-        employee_id,
-        title_id,
-        {{ parse_date_yy('birth_date') }} as birth_date,
-        first_name,
-        last_name,
-        gender,
-        {{ parse_date_yy('hire_date') }} as hire_date,
-        loaded_at
-    from bronze
-    where employee_id is not null
+        b.employee_id,
+        b.title_id,
+        {{ parse_date_yy('b.birth_date') }} as birth_date,
+        b.first_name,
+        b.last_name,
+        b.gender,
+        {{ parse_date_yy('b.hire_date') }}  as hire_date,
+        b.loaded_at
+    from bronze b
+    inner join {{ ref('silver_stg_titles') }} t on b.title_id = t.title_id
+    where b.employee_id is not null
 
 )
 
