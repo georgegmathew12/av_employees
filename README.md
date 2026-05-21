@@ -66,18 +66,42 @@ uv run dbt docs serve # auto-doc site
 - No `_fivetran_deleted` column — Google Drive connector dropped it in Aug 2019 (truncate-and-reload model)
 - `salaries` has one row per employee, treated as current salary (no salary history)
 - `titles` treated as a static lookup (no history)
+- **Referential integrity is broken in raw CSVs (accepted constraint)**: ~77% of `salaries` and `dept_emp` rows reference employee_ids that don't exist in the `employees` CSV. ELT preserves this faithfully (no data dropped in pipeline). Accepted as a source-data limitation; silver_stg FK tests fail by design until source is fixed.
 
 ### Modeling assumptions
 
 - `silver_int_employee` deliberately skips department field (no way to differentiate between current and historical department)
+- Silver contract: cleaned + joined data only, no derived columns or business defaults — those belong in gold
 - Bronze tests configured as warnings — data quality issues from upstream are expected; silver enforces strictness
 - `loaded_at` (renamed from `_fivetran_synced`) is the only blocking not_null test on bronze
 
+### PII
+
+These columns are personally identifiable and tagged with `meta: { pii: true }` in the YAML schema files:
+
+- `silver_stg_employees`, `silver_int_employee`: `first_name`, `last_name`
+- `silver_stg_salaries`, `silver_int_employee`: `salary`
+
+For multi-engineer or non-engineer access, apply Snowflake dynamic data masking policies. Example:
+
+```sql
+create masking policy mask_pii as (val string) returns string ->
+    case when current_role() in ('PII_VIEWER', 'ACCOUNTADMIN') then val else '***MASKED***' end;
+alter table dbt_george_silver.silver_int_employee
+    modify column first_name set masking policy mask_pii;
+```
+
+### Recurring sync (one-time load currently)
+
+This pipeline runs as a one-time load: CSVs were uploaded to Google Drive and Fivetran synced them into Snowflake once. To convert to a recurring pipeline:
+
+1. Set the Fivetran connector's sync schedule (e.g., hourly) in the Fivetran UI
+2. Add a `prod` target to `~/.dbt/profiles.yml` with a service account
+3. Schedule `dbt build` to run after each Fivetran sync — options: dbt Cloud (UI-based), GitHub Actions cron, Airflow/Dagster/Prefect (full orchestrator)
+
 ### Pipeline gaps to address later
 
-- No source freshness checks in `sources.yml` (would alert if Fivetran stops syncing)
+- No source freshness checks in `sources.yml` (would alert if Fivetran stops syncing — relevant only if pipeline becomes recurring)
 - No `prod` target in `profiles.yml` — only `dev`
-- No scheduled runs / CI (dbt Cloud, GitHub Actions, or orchestrator)
-- `models/example/` filler from `dbt init` is still present, unused
+- CI: Tier 1 (GitHub Actions running `uv run dbt parse` on every PR) is the next planned addition. Tiers 2 (compile against warehouse) and 3 (build against CI schema) require Snowflake service credentials and a separate CI schema.
 - Bronze column descriptions are sparse — would improve `dbt docs`
-- Row-count parity test between bronze and silver_stg not yet implemented
