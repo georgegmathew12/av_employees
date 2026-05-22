@@ -99,6 +99,12 @@ All gaps come from source data. ELT cannot fix what's missing upstream.
 | `gender` values | Assumed `M`/`F` | `accepted_values` test enforces | Expand allowed values if source changes |
 | No `_fivetran_deleted` column | Cannot detect source deletes | Truncate-and-reload; fine for one-time load | Filter `_fivetran_deleted` in bronze; enable incremental builds |
 
+## Consumers
+
+Gold serves analysts via Tableau. Non-technical users are expected to consume dashboards, not raw SQL.
+
+No flattened "one big table" view or denormalized publish layer exists on top of gold. Star schema + Tableau relationships is the canonical interface. Revisit if a non-Tableau consumer surfaces (exec team querying Snowsight, finance team pulling via Excel/ODBC, self-service SQL).
+
 ## Improvements
 
 ### Modeling
