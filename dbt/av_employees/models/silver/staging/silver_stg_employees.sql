@@ -18,6 +18,7 @@ cleaned as (
     from bronze b
     inner join {{ ref('silver_stg_titles') }} t on b.title_id = t.title_id
     where b.employee_id is not null
+    qualify row_number() over (partition by b.employee_id order by b.loaded_at desc, b._line desc) = 1
 
 )
 

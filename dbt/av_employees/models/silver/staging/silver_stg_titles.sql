@@ -12,7 +12,7 @@ cleaned as (
         loaded_at
     from bronze
     where title_id is not null
-    qualify row_number() over (partition by title_id order by loaded_at desc) = 1
+    qualify row_number() over (partition by title_id order by loaded_at desc, _line desc) = 1
 
 )
 

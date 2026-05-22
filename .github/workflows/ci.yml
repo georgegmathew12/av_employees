@@ -1,0 +1,46 @@
+name: ci
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  dbt-parse:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dbt/av_employees
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Install Python deps
+        working-directory: .
+        run: uv sync
+
+      - name: Stub profiles.yml
+        run: |
+          mkdir -p ~/.dbt
+          cat <<'EOF' > ~/.dbt/profiles.yml
+          av_employees:
+            target: dev
+            outputs:
+              dev:
+                type: snowflake
+                account: stub.us-east-1
+                user: stub
+                password: stub
+                role: stub
+                database: stub
+                warehouse: stub
+                schema: stub
+                threads: 4
+          EOF
+
+      - name: dbt deps
+        run: uv run dbt deps
+
+      - name: dbt parse
+        run: uv run dbt parse

@@ -2,27 +2,58 @@ version: 2
 
 models:
   - name: silver_int_employee
-    description: One row per employee with title, salary, and exit info. Department excluded — current dept unknowable from source.
+    description: One row per employee, joined with current title, salary, and exit info. Silver contract; gold reads from here.
     tests:
       - at_least_one_row
       - dbt_utils.expression_is_true:
           arguments:
             expression: "exit_date >= hire_date or exit_date is null"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "birth_date < hire_date"
     columns:
       - name: employee_id
-        tests: [unique]
+        description: Employee identifier. Primary key.
+        tests: [not_null, unique]
       - name: first_name
-        config:
-          meta: { pii: true }
+        description: Given name.
+        tests: [not_null]
       - name: last_name
-        config:
-          meta: { pii: true }
+        description: Family name.
+        tests: [not_null]
+      - name: gender
+        description: M or F.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['M', 'F']
+      - name: birth_date
+        description: Date of birth, parsed from VARCHAR.
+        tests: [not_null]
+      - name: hire_date
+        description: Date hired, parsed from VARCHAR.
+        tests: [not_null]
+      - name: title_id
+        description: Current title FK to silver_stg_titles.
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('silver_stg_titles')
+                field: title_id
+      - name: title
+        description: Current title text, from the joined titles lookup.
+        tests: [not_null]
       - name: salary
-        config:
-          meta: { pii: true }
+        description: Current salary. NULL when no salary record exists for the employee.
+      - name: exit_date
+        description: Date of exit. NULL for active employees.
+      - name: exit_reason
+        description: Numeric exit reason code. NULL for active employees. No decoder table provided.
 
   - name: silver_int_employee_department
-    description: Bridge table, one row per (employee, department) pair. Multiple rows per employee reflect dept history.
+    description: Bridge — one row per (employee, department). Multi-row per employee since source has no dates.
     tests:
       - at_least_one_row
       - dbt_utils.unique_combination_of_columns:
@@ -30,8 +61,45 @@ models:
             combination_of_columns: [employee_id, department_id]
     columns:
       - name: employee_id
+        description: FK to silver_int_employee.
         tests:
+          - not_null
           - relationships:
               arguments:
                 to: ref('silver_int_employee')
                 field: employee_id
+      - name: department_id
+        description: FK to silver_int_department.
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('silver_int_department')
+                field: department_id
+      - name: department_name
+        description: Department name (denormalized for gold convenience).
+        tests: [not_null]
+
+  - name: silver_int_department
+    description: Department lookup. Passthrough from silver staging for gold consumption.
+    tests:
+      - at_least_one_row
+    columns:
+      - name: department_id
+        description: Department code. Primary key.
+        tests: [not_null, unique]
+      - name: department_name
+        description: Department name.
+        tests: [not_null, unique]
+
+  - name: silver_int_title
+    description: Job title lookup. Passthrough from silver staging for gold consumption.
+    tests:
+      - at_least_one_row
+    columns:
+      - name: title_id
+        description: Title code. Primary key.
+        tests: [not_null, unique]
+      - name: title
+        description: Title name.
+        tests: [not_null]

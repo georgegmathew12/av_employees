@@ -12,9 +12,9 @@ dbt project lives in `av_employees/`. Adapter: `dbt-snowflake`.
 
 ```
 av_employees/models/
-├── bronze/   # 1:1 with raw, rename/cast/dedupe, drop fivetran metadata
-├── silver/   # conformed entities, joined, business keys
-└── gold/     # aggregated marts, BI-ready
+├── bronze/   # 1:1 with raw; rename/cast only — no filtering, no dedup
+├── silver/   # cleaned + conformed entities; staging dedupes + filters, intermediate joins
+└── gold/     # star schema, BI-ready
 ```
 
 ## Common commands
@@ -26,7 +26,6 @@ uv run dbt build              # run + test everything
 uv run dbt run -s bronze      # only bronze models
 uv run dbt test               # run tests
 uv run dbt docs generate      # build docs
-uv run dbt docs serve         # open docs in browser
 ```
 
 ## Profiles

@@ -11,13 +11,3 @@ av_employees:
       warehouse: <warehouse>
       schema: dbt_<your_initials>    # personal dev schema
       threads: 4
-    prod:
-      type: snowflake
-      account: <your_account>.<region>
-      user: <prod_user>
-      password: <prod_password>
-      role: <prod_role>
-      database: <database>
-      warehouse: <warehouse>
-      schema: analytics
-      threads: 8
