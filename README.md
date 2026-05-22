@@ -99,6 +99,11 @@ All gaps come from source data. ELT cannot fix what's missing upstream.
 | `gender` values | Assumed `M`/`F` | `accepted_values` test enforces | Expand allowed values if source changes |
 | No `_fivetran_deleted` column | Cannot detect source deletes | Truncate-and-reload; fine for one-time load | Filter `_fivetran_deleted` in bronze; enable incremental builds |
 
+## Consumers
+
+- **Tableau analysts** — connect to the star schema (`fct_employment`, `fct_employee_department`, and the dims) and define relationships in the data source.
+- **Non-Tableau users** (Snowsight, Excel/ODBC, ad-hoc SQL) — query `vw_employee_full`. One row per employee with attributes pre-joined; departments collapsed into a comma-separated string. For exact department filtering, use the star schema instead.
+
 ## Improvements
 
 ### Modeling
