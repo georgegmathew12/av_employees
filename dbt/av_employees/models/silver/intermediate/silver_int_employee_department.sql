@@ -6,7 +6,7 @@ with dept_emp as (
 
 departments as (
 
-    select * from {{ ref('silver_stg_departments') }}
+    select * from {{ ref('silver_int_department') }}
 
 ),
 

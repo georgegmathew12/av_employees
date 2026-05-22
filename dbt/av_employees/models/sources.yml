@@ -2,135 +2,134 @@ version: 2
 
 sources:
   - name: google_drive
-    description: ""
+    description: Raw CSVs replicated from a Google Drive folder by Fivetran.
     tables:
       - name: departments
-        description: ""
+        description: Department lookup. One row per department.
         columns:
           - name: _line
             data_type: number
-            description: ""
+            description: CSV line number from the source file. Used as a dedupe tiebreaker.
           - name: _fivetran_synced
             data_type: timestamp_tz
-            description: ""
+            description: When Fivetran replicated this row.
           - name: dept_no
             data_type: varchar
-            description: ""
+            description: Department code (PK).
           - name: dept_name
             data_type: varchar
-            description: ""
+            description: Department name.
 
       - name: departures
-        description: ""
+        description: One row per employee exit.
         columns:
           - name: _line
             data_type: number
-            description: ""
+            description: CSV line number.
           - name: _fivetran_synced
             data_type: timestamp_tz
-            description: ""
+            description: Fivetran sync timestamp.
           - name: emp_no
             data_type: number
-            description: ""
+            description: Employee ID (FK to employees).
           - name: exit_date
             data_type: varchar
-            description: ""
+            description: Exit date as MM/DD/YY VARCHAR; parsed in silver.
           - name: exit_reason
             data_type: number
-            description: ""
+            description: Exit reason code (no decoder table provided).
 
       - name: dept_emp
-        description: ""
+        description: Employee-to-department assignments. Multi-row per employee, no dates.
         columns:
           - name: _line
             data_type: number
-            description: ""
+            description: CSV line number.
           - name: _fivetran_synced
             data_type: timestamp_tz
-            description: ""
+            description: Fivetran sync timestamp.
           - name: emp_no
             data_type: number
-            description: ""
+            description: Employee ID.
           - name: dept_no
             data_type: varchar
-            description: ""
+            description: Department code.
 
       - name: dept_manager
-        description: ""
+        description: Department-to-manager assignments. Multi-row per department, no dates.
         columns:
           - name: _line
             data_type: number
-            description: ""
+            description: CSV line number.
           - name: _fivetran_synced
             data_type: timestamp_tz
-            description: ""
+            description: Fivetran sync timestamp.
           - name: dept_no
             data_type: varchar
-            description: ""
+            description: Department code.
           - name: emp_no
             data_type: number
-            description: ""
+            description: Employee ID (the manager).
 
       - name: employees
-        description: ""
+        description: One row per employee. Source uses MM/DD/YY date strings.
         columns:
           - name: _line
             data_type: number
-            description: ""
+            description: CSV line number.
           - name: _fivetran_synced
             data_type: timestamp_tz
-            description: ""
+            description: Fivetran sync timestamp.
           - name: emp_no
             data_type: number
-            description: ""
+            description: Employee ID (PK).
           - name: emp_title_id
             data_type: varchar
-            description: ""
+            description: Title code (FK to titles).
           - name: birth_date
             data_type: varchar
-            description: ""
+            description: Birth date as MM/DD/YY VARCHAR; parsed in silver.
           - name: first_name
             data_type: varchar
-            description: ""
+            description: Given name.
           - name: last_name
             data_type: varchar
-            description: ""
+            description: Family name.
           - name: sex
             data_type: varchar
-            description: ""
+            description: M or F.
           - name: hire_date
             data_type: varchar
-            description: ""
+            description: Hire date as MM/DD/YY VARCHAR; parsed in silver.
 
       - name: salaries
-        description: ""
+        description: Current salary per employee. One row per employee, no date column.
         columns:
           - name: _line
             data_type: number
-            description: ""
+            description: CSV line number.
           - name: _fivetran_synced
             data_type: timestamp_tz
-            description: ""
+            description: Fivetran sync timestamp.
           - name: emp_no
             data_type: number
-            description: ""
+            description: Employee ID.
           - name: salary
             data_type: number
-            description: ""
+            description: Salary amount in USD.
 
       - name: titles
-        description: ""
+        description: Job title lookup. One row per title.
         columns:
           - name: _line
             data_type: number
-            description: ""
+            description: CSV line number.
           - name: _fivetran_synced
             data_type: timestamp_tz
-            description: ""
+            description: Fivetran sync timestamp.
           - name: title_id
             data_type: varchar
-            description: ""
+            description: Title code (PK).
           - name: title
             data_type: varchar
-            description: ""
-
+            description: Title name.

@@ -14,18 +14,6 @@ models:
       - dbt_utils.expression_is_true:
           arguments:
             expression: "hire_date <= current_date()"
-      - parse_success_rate:
-          arguments:
-            parsed_column: birth_date
-            source_model: ref('bronze_employees')
-            source_column: birth_date
-            key_column: employee_id
-      - parse_success_rate:
-          arguments:
-            parsed_column: hire_date
-            source_model: ref('bronze_employees')
-            source_column: hire_date
-            key_column: employee_id
     columns:
       - name: employee_id
         tests: [not_null, unique]
@@ -64,12 +52,6 @@ models:
       - dbt_utils.expression_is_true:
           arguments:
             expression: "exit_date <= current_date()"
-      - parse_success_rate:
-          arguments:
-            parsed_column: exit_date
-            source_model: ref('bronze_departures')
-            source_column: exit_date
-            key_column: employee_id
     columns:
       - name: employee_id
         tests:

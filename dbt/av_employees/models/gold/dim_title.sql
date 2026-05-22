@@ -1,4 +1,4 @@
 select
     title_id,
     title
-from {{ ref('silver_stg_titles') }}
+from {{ ref('silver_int_title') }}

@@ -6,8 +6,8 @@ exposures:
     type: dashboard
     maturity: low
     owner:
-      name: Analytics
-      email: analytics@example.com
+      name: George Mathew
+      email: george@havilandsoftware.com
     description: |
       Tableau dashboard covering: monthly/quarterly newcomers and leavers,
       annual turnover, headcount, leavers by department, generation, and
