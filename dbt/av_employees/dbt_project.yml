@@ -29,11 +29,7 @@ clean-targets:         # directories to be removed by `dbt clean`
 # In this example config, we tell dbt to build all models in the example/
 # directory as views. These settings can be overridden in the individual model
 # files using the `{{ config(...) }}` macro.
-# Snowflake's TWO_DIGIT_CENTURY_START controls MM/DD/YY two-digit-year parsing.
-# We set it to (current_year - 99): the oldest birth year drops a year every Jan 1,
-# while the newest 2-digit hire/exit year always parses as the current year.
-# For 2026, this is 1927 (YY 27-99 → 1900s, 00-26 → 2000s).
-# Pre-hooks apply to every model + test + snapshot session.
+# Set Snowflake's MM/DD/YY pivot to (current_year - 99) on every session.
 models:
   +pre_hook: "alter session set TWO_DIGIT_CENTURY_START = {{ run_started_at.year - 99 }}"
   av_employees:
