@@ -36,7 +36,13 @@ models:
       +schema: bronze
     silver:
       +schema: silver
+      +access: protected
       staging:
         +materialized: view
       intermediate:
         +materialized: table
+    gold:
+      +schema: gold
+      +materialized: table
+      +access: protected
+      +contract: { enforced: true }

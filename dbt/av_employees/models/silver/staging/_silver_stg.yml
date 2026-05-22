@@ -42,6 +42,7 @@ models:
         tests: [not_null]
       - name: gender
         tests:
+          - not_null
           - accepted_values:
               arguments:
                 values: ['M', 'F']
