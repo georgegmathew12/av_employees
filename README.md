@@ -91,7 +91,7 @@ All gaps come from source data. ELT cannot fix what's missing upstream.
 | `dept_emp` / `dept_manager` have no dates | Cannot determine dept-at-exit or current manager | Bridge fact + `dim_employee.has_single_department` flag | Add dates to source; derive dept-at-exit by joining `fct_employment.exit_date` to a dated bridge |
 | `exit_reason` is a code with no decoder | Shows raw codes only | `dim_exit_reason.exit_reason_label` = `"unknown (<code>)"` | Populate real labels in `dim_exit_reason` |
 | No location column anywhere | Cannot slice by location | Omit from dashboard | Add `dim_location` + `location_id` FK on `fct_employment` |
-| Dates stored as `MM/DD/YY` VARCHAR | Two-digit year is ambiguous | Project sets `TWO_DIGIT_CENTURY_START = 1925` so YY 25-99 → 1900s, 00-24 → 2000s | Source supplies ISO dates → drop the session param + parse macro |
+| Dates stored as `MM/DD/YY` VARCHAR | Two-digit year is ambiguous | `parse_date_yy` macro shifts any parsed year ≥ 2025 back by 100 years (assumes no legitimate future dates) | Source supplies ISO dates → drop the parse macro |
 | `salaries` has 1 row per employee, no date | Could be from any snapshot | Treated as current — assumption based on 1-row-per-employee shape | Use most recent dated salary on `fct_employment`; optionally add history fact |
 | `titles` resolves to 1 title per employee, no date | Same as salary | Treated as current — same assumption | Same pattern as salary |
 | ~77% of `salaries` and `dept_emp` rows reference `employee_ids` not in `employees` | FK broken | Silver inner-joins to drop orphans | Source fixes referential integrity → switch to left joins |
