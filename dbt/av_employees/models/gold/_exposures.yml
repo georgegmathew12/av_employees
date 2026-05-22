@@ -18,5 +18,6 @@ exposures:
       - ref('dim_title')
       - ref('dim_exit_reason')
       - ref('dim_date')
+      - ref('dim_generation')
       - ref('fct_employment')
       - ref('fct_employee_department')

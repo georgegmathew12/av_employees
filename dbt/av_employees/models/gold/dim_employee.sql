@@ -1,8 +1,22 @@
+with employees as (
+
+    select * from {{ ref('silver_int_employee') }}
+
+),
+
+generations as (
+
+    select * from {{ ref('dim_generation') }}
+
+)
+
 select
-    employee_id,
-    first_name,
-    last_name,
-    gender,
-    birth_date,
-    {{ generation_bucket('birth_date') }} as generation_bucket
-from {{ ref('silver_int_employee') }}
+    e.employee_id,
+    e.first_name,
+    e.last_name,
+    e.gender,
+    e.birth_date,
+    g.generation_id
+from employees e
+left join generations g
+    on year(e.birth_date) between g.min_year and g.max_year

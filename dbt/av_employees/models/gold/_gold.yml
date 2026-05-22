@@ -2,7 +2,7 @@ version: 2
 
 models:
   - name: dim_date
-    description: Calendar date spine, 1985-01-01 through current_date + 1 year.
+    description: Calendar date spine, 1900-01-01 through current_date + 1 year.
     config:
       contract: { enforced: true }
     columns:
@@ -32,8 +32,36 @@ models:
         data_type: varchar
         constraints: [{ type: not_null }]
 
+  - name: dim_generation
+    description: Generation classification (Silent through Generation Alpha). Boundaries are external definitions; modify rows here to change them without touching facts.
+    config:
+      contract: { enforced: true }
+    tests:
+      - at_least_one_row
+    columns:
+      - name: generation_id
+        data_type: number
+        constraints:
+          - type: not_null
+          - type: primary_key
+        tests: [not_null, unique]
+      - name: generation_name
+        data_type: varchar
+        constraints: [{ type: not_null }]
+        tests: [unique]
+      - name: min_year
+        data_type: number
+        constraints: [{ type: not_null }]
+      - name: max_year
+        data_type: number
+        constraints: [{ type: not_null }]
+      - name: sort_order
+        data_type: number
+        constraints: [{ type: not_null }]
+        tests: [unique]
+
   - name: dim_employee
-    description: One row per employee. Includes demographics + generation bucket.
+    description: One row per employee. Demographics + generation FK.
     config:
       contract: { enforced: true }
     tests:
@@ -63,13 +91,20 @@ models:
       - name: birth_date
         data_type: date
         constraints: [{ type: not_null }]
-      - name: generation_bucket
-        data_type: varchar
+        tests:
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_id
+      - name: generation_id
+        data_type: number
         constraints: [{ type: not_null }]
         tests:
-          - accepted_values:
+          - not_null
+          - relationships:
               arguments:
-                values: ['Silent Generation', 'Baby Boomer', 'Generation X', 'Millennial', 'Generation Z', 'Generation Alpha']
+                to: ref('dim_generation')
+                field: generation_id
 
   - name: dim_department
     description: Department lookup.
@@ -107,11 +142,11 @@ models:
         constraints: [{ type: not_null }]
 
   - name: dim_exit_reason
-    description: Exit reason codes. Label is "unknown (<code>)" until a decoder table is provided (see README gaps).
+    description: Exit reason lookup. Label is "unknown (<code>)" until a decoder table is provided (see README gaps).
     config:
       contract: { enforced: true }
     columns:
-      - name: exit_reason_code
+      - name: exit_reason_id
         data_type: number
         constraints:
           - type: not_null
@@ -122,7 +157,7 @@ models:
         constraints: [{ type: not_null }]
 
   - name: fct_employment
-    description: One row per employee employment span. Active and exited employees.
+    description: One row per employee employment span. Tenure exposed as raw days — analysts bucket in Tableau.
     config:
       contract: { enforced: true }
     tests:
@@ -170,23 +205,26 @@ models:
       - name: exit_date
         description: NULL for active employees.
         data_type: date
-      - name: exit_reason_code
+        tests:
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_id
+      - name: exit_reason_id
         data_type: number
+        tests:
+          - relationships:
+              arguments:
+                to: ref('dim_exit_reason')
+                field: exit_reason_id
       - name: salary
         description: NULL when no salary record exists for the employee.
         data_type: number
         config: { meta: { pii: true } }
       - name: tenure_days
-        description: Days from hire_date to exit_date (or to current_date if active).
+        description: Days from hire_date to exit_date (or current_date if active).
         data_type: number
         constraints: [{ type: not_null }]
-      - name: tenure_bucket
-        data_type: varchar
-        constraints: [{ type: not_null }]
-        tests:
-          - accepted_values:
-              arguments:
-                values: ['<1', '1-2', '2-3', '3-5', '>5']
       - name: is_active
         data_type: boolean
         constraints: [{ type: not_null }]

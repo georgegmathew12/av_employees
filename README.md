@@ -79,15 +79,19 @@ uv run dbt docs serve # auto-doc site
 
 Star schema in `gold` schema, consumed by Tableau analysts. All models materialized as tables with enforced contracts (column types locked).
 
-**Dims:** `dim_employee`, `dim_department`, `dim_title`, `dim_exit_reason`, `dim_date`
+**Dims:** `dim_employee`, `dim_department`, `dim_title`, `dim_exit_reason`, `dim_date`, `dim_generation`
 **Facts:** `fct_employment` (1 row/employee), `fct_employee_department` (bridge)
+
+`fct_employment.tenure_days` is exposed as a continuous measure — analysts bucket it in Tableau (`Create Bins`) to fit each dashboard's needs. Generation boundaries are external classifications, so they live in `dim_generation` as data (one-row update to redefine, no fact rebuild).
+
+Supported dashboard cuts include: newcomers/leavers per month or quarter, annual turnover, headcount over time, leavers by generation, leavers by tenure bucket, leavers by exit reason, and **leavers by job title** (join `fct_employment` → `dim_title` on `title_id`, filter `is_active = false`).
 
 ### Gold data gaps
 
 | Gap | What's needed to fix | Once fixed | Workaround today |
 |---|---|---|---|
 | Location | source column on `employees` (or office-assignment table with dates) | add `dim_location` + `location_id` FK on `fct_employment` | "leavers by location" omitted from dashboard |
-| Exit reason decoder | lookup table (code → label, category) | populate `dim_exit_reason.exit_reason_label`; no schema change needed | label = `"unknown (<code>)"` |
+| Exit reason decoder | lookup table (code → label, category) | replace `fct_employment.exit_reason_code` with text `exit_reason` sourced from `dim_exit_reason.exit_reason_label`; populate real labels in the dim | label = `"unknown (<code>)"`, fact exposes raw code |
 | Dept-at-exit | dates on `dept_emp` source | join `fct_employment.exit_date` to dated bridge, store `exit_department_id` on the fact | `fct_employee_department.is_only_department` flag; dashboard filters to single-dept employees for clean dept-of-leaver charts |
 
 ### Access (analyst role)
