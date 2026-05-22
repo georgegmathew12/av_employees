@@ -5,11 +5,11 @@ ELT pipeline for AV employee data.
 ## Architecture
 
 ```
-CSVs (Google Drive) → Fivetran → Snowflake (raw) → dbt (bronze → silver → gold) → Tableau
+CSVs (Google Drive) → Fivetran → Snowflake (raw) → dbt (bronze → silver → gold) → Tableau / SQL consumers
 ```
 
 - Fivetran loads CSVs into Snowflake (one-time, truncate-and-reload).
-- dbt transforms raw → bronze (typed) → silver (cleaned + conformed) → gold (star schema).
+- dbt transforms raw → bronze (typed) → silver (cleaned + conformed) → gold (star schema + a flat view for non-Tableau consumers).
 
 ## Repo layout
 
@@ -51,12 +51,13 @@ uv run dbt docs generate     # build the lineage site
 
 ## Pipeline walkthrough
 
-### Gold — data mart for Tableau
+### Gold — data mart
 
 Star schema in the `gold` schema. Tables with enforced contracts.
 
 **Dims:** `dim_employee`, `dim_department`, `dim_title`, `dim_exit_reason`, `dim_date`, `dim_generation`
 **Facts:** `fct_employment` (1 row per employee), `fct_employee_department` (bridge — multiple departments per employee, source has no dates)
+**Views:** `vw_employee_full` (denormalized one-row-per-employee for non-Tableau consumers — see Consumers section)
 
 Gold reads only from silver intermediate models.
 
