@@ -5,11 +5,11 @@ ELT pipeline for AV employee data.
 ## Architecture
 
 ```
-CSVs (Google Drive) → Fivetran → Snowflake (raw) → dbt (bronze → silver → gold) → Tableau
+CSVs (Google Drive) → Fivetran → Snowflake (raw) → dbt (bronze → silver → gold) → Tableau / SQL consumers
 ```
 
 - Fivetran loads CSVs into Snowflake (one-time, truncate-and-reload).
-- dbt transforms raw → bronze (typed) → silver (cleaned + conformed) → gold (star schema).
+- dbt transforms raw → bronze (typed) → silver (cleaned + conformed) → gold (star schema + a flat view for non-Tableau consumers).
 
 ## Repo layout
 
@@ -51,12 +51,13 @@ uv run dbt docs generate     # build the lineage site
 
 ## Pipeline walkthrough
 
-### Gold — data mart for Tableau
+### Gold — data mart
 
 Star schema in the `gold` schema. Tables with enforced contracts.
 
 **Dims:** `dim_employee`, `dim_department`, `dim_title`, `dim_exit_reason`, `dim_date`, `dim_generation`
 **Facts:** `fct_employment` (1 row per employee), `fct_employee_department` (bridge — multiple departments per employee, source has no dates)
+**Views:** `vw_employee_full` (denormalized one-row-per-employee for non-Tableau consumers — see Consumers section)
 
 Gold reads only from silver intermediate models.
 
@@ -98,6 +99,11 @@ All gaps come from source data. ELT cannot fix what's missing upstream.
 | Null rows in `employees` (~777) and `departures` (~17,637) | Blank CSV lines | Filtered in silver | Source removes blank lines |
 | `gender` values | Assumed `M`/`F` | `accepted_values` test enforces | Expand allowed values if source changes |
 | No `_fivetran_deleted` column | Cannot detect source deletes | Truncate-and-reload; fine for one-time load | Filter `_fivetran_deleted` in bronze; enable incremental builds |
+
+## Consumers
+
+- **Tableau analysts** — connect to the star schema (`fct_employment`, `fct_employee_department`, and the dims) and define relationships in the data source.
+- **Non-Tableau users** (Snowsight, Excel/ODBC, ad-hoc SQL) — query `vw_employee_full`. One row per employee with attributes pre-joined; departments collapsed into a comma-separated string. For exact department filtering, use the star schema instead.
 
 ## Improvements
 

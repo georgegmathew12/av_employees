@@ -298,3 +298,11 @@ models:
               arguments:
                 to: ref('dim_department')
                 field: department_id
+
+  - name: vw_employee_full
+    description: Denormalized one-row-per-employee view for non-Tableau consumers (Snowsight, Excel/ODBC). Departments collapsed via listagg. Passthrough over already-contracted gold tables — no contract here.
+    tests:
+      - at_least_one_row
+    columns:
+      - name: employee_id
+        tests: [not_null, unique]
