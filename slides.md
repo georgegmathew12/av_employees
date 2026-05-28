@@ -291,6 +291,48 @@ style: |
   .recap .before h4 { color: var(--muted); }
   .recap .after h4 { color: var(--good); }
   .recap ul { padding-left: 20px; font-size: 16px; line-height: 1.5; }
+  /* Bar chart */
+  .bars { margin-top: 18px; }
+  .bar-row { display: flex; align-items: center; gap: 14px; margin-bottom: 11px; }
+  .bar-row .name { width: 180px; flex-shrink: 0; text-align: right; font-size: 16px; color: var(--ink); }
+  .bar-row .track { width: 820px; flex: none; }
+  .bar-row .fill {
+    height: 26px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  }
+  .fill.b1 { width: 820px; }
+  .fill.b2 { width: 692px; }
+  .fill.b3 { width: 489px; }
+  .fill.b4 { width: 234px; }
+  .fill.b5 { width: 195px; }
+  .fill.b6 { width: 190px; }
+  .bar-row .val { width: 60px; flex-shrink: 0; font-size: 15px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+  /* Pie chart */
+  .pie-wrap { display: flex; align-items: center; gap: 32px; margin-top: 18px; }
+  .pie {
+    position: relative;
+    width: 200px; height: 200px; border-radius: 50%; flex-shrink: 0;
+    background: conic-gradient(
+      #06B6D4 0 25.55deg,
+      #4F46E5 25.55deg 171.54deg,
+      #E0A82E 171.54deg 317.76deg,
+      #475569 317.76deg 360deg
+    );
+  }
+  .pie .pl { position: absolute; transform: translate(-50%, -50%); font-size: 14px; font-weight: 700; }
+  .pl1 { left: 113px; top: 41px; color: #0F172A; }
+  .pl2 { left: 159px; top: 109px; color: #FFFFFF; }
+  .pl3 { left: 46px;  top: 126px; color: #3F2D00; }
+  .pl4 { left: 78px;  top: 44px;  color: #FFFFFF; }
+  .legend { flex: 1; }
+  .legend-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-size: 16px; color: var(--ink); }
+  .legend-row .sw { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
+  .legend-row .lp { margin-left: auto; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .sw1 { background: #06B6D4; }
+  .sw2 { background: #4F46E5; }
+  .sw3 { background: #E0A82E; }
+  .sw4 { background: #475569; }
 ---
 
 <!-- _class: cover -->
@@ -391,15 +433,16 @@ Each tool does one job: **Fivetran** loads the data, **Snowflake** stores it, an
 ### LOADING
 ## Fivetran loads the files
 
-- Fivetran reads the Google Drive folder, unzips it, and loads each CSV into its own Snowflake table.
+- Fivetran reads the Google Drive folder and loads each CSV into its own Snowflake table.
 - There is no custom code to write or maintain. The connector handles it.
+- This was a one time load. Putting it on a schedule is a small config change.
 
-<div class="callout">A managed connector costs more than writing our own script, but it is more reliable and there is nothing to maintain.</div>
+<div class="callout">A managed connector is reliable out of the box, needs no maintenance, and frees us to spend our time on the data itself.</div>
 
 ---
 
 ### STORAGE
-## Snowflake holds it all
+## Snowflake stores it all
 
 The data lands in Snowflake and stays there through every stage of cleanup. We keep each stage, so any number on the dashboard can be traced back to the source.
 
@@ -440,7 +483,7 @@ The data lands in Snowflake and stays there through every stage of cleanup. We k
     <div class="body">
       <p>Make it usable</p>
       <ul>
-        <li>Analytics-ready tables</li>
+        <li>Tables ready for analysis</li>
         <li>Plus a flat view for SQL</li>
       </ul>
     </div>
@@ -482,7 +525,7 @@ Every gap is in the **source data**, not the pipeline. When the source improves,
 
 - **Tests** catch missing values, duplicates, and bad codes at every layer.
 - **Contracts** stop the build if the source changes shape, before bad data reaches the dashboard.
-- **History** is kept for tables that arrive without dates.
+- **Automated checks** validate and compile the project on every change.
 - **Lineage** ties every dashboard field back to its source file.
 
 ---
@@ -490,13 +533,13 @@ Every gap is in the **source data**, not the pipeline. When the source improves,
 ### GOVERNANCE
 ## Access and security
 
-The data holds names, pay, and departures, so we control who can see it.
+The data holds names, pay, and departures, so access matters.
 
-- **Role based access** in Snowflake. Analysts see the finished tables. The raw and in progress layers stay locked.
+- **Layered by design.** The pipeline separates raw, in progress, and finished tables, ready for role based grants.
 - **Reviewed changes.** Every change is version controlled and approved before it takes effect.
 - **Traceable.** Lineage means any number can be traced back to its source.
 
-<div class="callout">Role based access covers who sees the data today. Masking individual fields like pay is the next step.</div>
+<div class="callout">Next: grant analysts access to the finished tables only, and mask sensitive fields like pay.</div>
 
 ---
 
@@ -517,23 +560,43 @@ Tables built for Tableau. Break the numbers down by team, role, generation, or e
 </div>
 <div>
 
-<h4>Example: tenure by generation</h4>
+<h4>Example: leavers by tenure</h4>
 
-```sql
-select generation_name,
-       round(avg(tenure_days)/365, 1)
-         as avg_years,
-       count_if(not is_active)
-         as departures
-from vw_employee_full
-group by generation_name
-order by departures desc;
-```
+<div class="pie-wrap">
+  <div class="pie">
+    <span class="pl pl1">7%</span>
+    <span class="pl pl2">41%</span>
+    <span class="pl pl3">41%</span>
+    <span class="pl pl4">12%</span>
+  </div>
+  <div class="legend">
+    <div class="legend-row"><span class="sw sw1"></span>Under 5 yrs</div>
+    <div class="legend-row"><span class="sw sw2"></span>5 to 10 yrs</div>
+    <div class="legend-row"><span class="sw sw3"></span>10 to 15 yrs</div>
+    <div class="legend-row"><span class="sw sw4"></span>15+ yrs</div>
+  </div>
+</div>
 
-One short query answers a real HR question. The same thing is point and click in Tableau.
+Most people stay 5 to 15 years before leaving. Few leave in their first five.
 
 </div>
 </div>
+
+---
+
+### RESULT
+## Where people leave from
+
+<div class="bars">
+  <div class="bar-row"><div class="name">Development</div><div class="track"><div class="fill b1"></div></div><div class="val">1,541</div></div>
+  <div class="bar-row"><div class="name">Production</div><div class="track"><div class="fill b2"></div></div><div class="val">1,300</div></div>
+  <div class="bar-row"><div class="name">Sales</div><div class="track"><div class="fill b3"></div></div><div class="val">918</div></div>
+  <div class="bar-row"><div class="name">Customer Service</div><div class="track"><div class="fill b4"></div></div><div class="val">440</div></div>
+  <div class="bar-row"><div class="name">Research</div><div class="track"><div class="fill b5"></div></div><div class="val">367</div></div>
+  <div class="bar-row"><div class="name">Marketing</div><div class="track"><div class="fill b6"></div></div><div class="val">357</div></div>
+</div>
+
+Development and Production lose the most people. HR can now pull this in seconds, then drill into role, tenure, or generation.
 
 ---
 
@@ -559,14 +622,12 @@ One short query answers a real HR question. The same thing is point and click in
   </div>
 </div>
 
-<div class="callout">HR can stop <strong>guessing</strong> about attrition and start <strong>acting</strong> on it.</div>
-
 ---
 
 ### SUMMARY
 ## Summary and next steps
 
-**Done.** A clean, tested dataset behind the dashboard, with access controlled and every number traceable.
+**Done.** A clean, tested dataset behind the dashboard, with controlled access and traceable numbers.
 
 **Next, in order:**
 
