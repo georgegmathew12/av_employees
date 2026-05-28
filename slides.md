@@ -3,7 +3,7 @@ marp: true
 paginate: true
 size: 16:9
 title: AV Employees ELT Pipeline
-description: ELT pipeline for AV employee data — Fivetran, Snowflake, dbt
+description: ELT pipeline for AV employee data. Fivetran, Snowflake, dbt.
 style: |
   :root {
     --accent: #4F46E5;
@@ -17,7 +17,9 @@ style: |
     --border: #E2E8F0;
     --bronze: #92400E;
     --silver: #475569;
-    --gold: #B45309;
+    --gold: #E0A82E;
+    --good: #047857;
+    --bad: #B91C1C;
   }
   section {
     background: var(--surface);
@@ -67,10 +69,13 @@ style: |
   section ul li { margin-bottom: 6px; }
   section li::marker { color: var(--accent); }
   section ol { padding-left: 22px; line-height: 1.65; }
+  section ol li { margin-bottom: 6px; }
   section table {
+    display: table;
     font-size: 16px;
     border-collapse: collapse;
     width: 100%;
+    table-layout: fixed;
     border: 1px solid var(--border);
     border-radius: 10px;
     overflow: hidden;
@@ -93,6 +98,25 @@ style: |
   }
   section tr:last-child td { border-bottom: none; }
   section tr:nth-child(even) td { background: var(--surface-2); }
+  section pre {
+    background: #0F172A;
+    color: #E2E8F0;
+    border-radius: 12px;
+    padding: 20px 24px;
+    font-size: 15px;
+    line-height: 1.55;
+    margin: 0;
+    overflow: hidden;
+  }
+  section code { font-family: "SF Mono", "Menlo", "Consolas", monospace; }
+  section :not(pre) > code {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 1px 6px;
+    font-size: 0.88em;
+    color: var(--ink);
+  }
   section::after {
     color: var(--soft);
     font-weight: 600;
@@ -200,7 +224,7 @@ style: |
   .medallion .card .body ul li { margin-bottom: 4px; }
   .bronze h4 { background: var(--bronze); }
   .silver h4 { background: var(--silver); }
-  .gold h4 { background: var(--gold); }
+  .gold h4 { background: var(--gold); color: #3F2D00; }
   /* Two column */
   .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
   .two-col h4 {
@@ -230,6 +254,43 @@ style: |
     font-variant-numeric: tabular-nums;
   }
   .agenda .label { font-size: 18px; color: var(--ink); font-weight: 500; }
+  /* Stat cards */
+  .stats { display: flex; gap: 20px; margin: 8px 0 28px; }
+  .stat {
+    flex: 1;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px 26px;
+  }
+  .stat .num {
+    font-size: 46px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .stat .num.warm { color: var(--warm); }
+  .stat .lbl { font-size: 15px; color: var(--muted); margin-top: 10px; line-height: 1.35; }
+  /* Callout */
+  .callout {
+    background: #EEF2FF;
+    border-left: 4px solid var(--accent);
+    border-radius: 8px;
+    padding: 16px 22px;
+    font-size: 18px;
+    margin-top: 8px;
+  }
+  .callout strong { color: var(--accent); }
+  /* Before / after recap */
+  .recap { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 4px; }
+  .recap .col { border-radius: 12px; padding: 20px 24px; }
+  .recap .before { background: var(--surface-2); border: 1px solid var(--border); }
+  .recap .after { background: #ECFDF5; border: 1px solid #A7F3D0; }
+  .recap h4 { font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; margin: 0 0 12px; }
+  .recap .before h4 { color: var(--muted); }
+  .recap .after h4 { color: var(--good); }
+  .recap ul { padding-left: 20px; font-size: 16px; line-height: 1.5; }
 ---
 
 <!-- _class: cover -->
@@ -241,44 +302,78 @@ style: |
 
 <div class="accent-bar"></div>
 
-<div class="sub">The ingestion, storage, and transformation layer that feeds the HR analytics dashboard.</div>
+<div class="sub">The data behind the HR attrition dashboard.</div>
 
 <div class="meta">George Mathew  ·  May 29, 2026</div>
 
 ---
 
 ### AGENDA
-## Today
+## Agenda
 
 <div class="agenda">
-  <div class="item"><span class="label">Background</span></div>
-  <div class="item"><span class="label">Architecture</span></div>
-  <div class="item"><span class="label">Ingestion — Fivetran</span></div>
-  <div class="item"><span class="label">Storage — Snowflake</span></div>
-  <div class="item"><span class="label">Transformation — dbt</span></div>
-  <div class="item"><span class="label">Quality &amp; limitations</span></div>
-  <div class="item"><span class="label">Design decisions</span></div>
-  <div class="item"><span class="label">Roadmap &amp; discussion</span></div>
+  <div class="item"><span class="label">Problem</span></div>
+  <div class="item"><span class="label">Raw data</span></div>
+  <div class="item"><span class="label">Loading</span></div>
+  <div class="item"><span class="label">Transforming</span></div>
+  <div class="item"><span class="label">Decisions</span></div>
+  <div class="item"><span class="label">Limitations</span></div>
+  <div class="item"><span class="label">Quality &amp; access</span></div>
+  <div class="item"><span class="label">Impact &amp; next</span></div>
 </div>
 
 ---
 
-### BACKGROUND
-## Why this exists
+### PROBLEM
+## One in five employees have left
 
-- HR leadership saw a Tableau dashboard demo for employment trends and attrition.
-- Source data is seven CSV files (employees, departments, titles, salaries, departures).
-- This pipeline turns those CSVs into a governed dataset Tableau and analysts can rely on.
+<div class="stats">
+  <div class="stat"><div class="num warm">20%</div><div class="lbl">of employees have left</div></div>
+  <div class="stat"><div class="num">14,032</div><div class="lbl">departures recorded</div></div>
+  <div class="stat"><div class="num">69,321</div><div class="lbl">employees in the data</div></div>
+</div>
+
+HR needs to know who is leaving, and from which teams and roles. That data already exists, but it is stuck in raw files that no one can query yet.
+
+<div class="callout"><strong>The goal:</strong> one clean dataset HR can actually use.</div>
+
+---
+
+### RAW DATA
+## The raw data
+
+<div class="two-col">
+<div>
+
+<h4>What we had</h4>
+
+- Seven CSV files: employees, departments, titles, salaries, departures
+- The links between people, teams, and roles
+- Enough to see who worked where and who left
+
+</div>
+<div>
+
+<h4>What we lacked</h4>
+
+- Reliable dates. They came as text with two digit years, so some are ambiguous.
+- Reliable IDs. Many rows pointed to no one.
+- Exit reason labels, or any location data.
+
+</div>
+</div>
+
+<div class="callout">Before cleanup the files held <strong>~777</strong> blank employee rows, <strong>~17,600</strong> blank departure rows, and <strong>~77%</strong> of salary rows for employees who aren't in the data.</div>
 
 ---
 
 ### ARCHITECTURE
-## End-to-end
+## The pipeline
 
 <div class="pipeline">
   <div class="stage"><div class="pill">CSVs</div><div class="sub">Google Drive</div></div>
   <div class="arrow">→</div>
-  <div class="stage"><div class="pill accent">Fivetran</div><div class="sub">Ingestion</div></div>
+  <div class="stage"><div class="pill accent">Fivetran</div><div class="sub">Load</div></div>
   <div class="arrow">→</div>
   <div class="stage"><div class="pill ink">Snowflake</div><div class="sub">Raw</div></div>
   <div class="arrow">→</div>
@@ -289,196 +384,212 @@ style: |
   <div class="stage"><div class="pill gold">Tableau</div><div class="sub">Dashboard</div></div>
 </div>
 
-Each tool has one job. The boundaries between them are governed by tests and contracts.
+Each tool does one job: **Fivetran** loads the data, **Snowflake** stores it, and **dbt** cleans it. We check the data at every step.
 
 ---
 
-### INGESTION
-## Fivetran
+### LOADING
+## Fivetran loads the files
 
-- Reads the Google Drive folder, unzips, lands each CSV into its own Snowflake table.
-- Attaches a `_fivetran_synced` timestamp to every row.
-- Zero custom loader code to maintain.
+- Fivetran reads the Google Drive folder, unzips it, and loads each CSV into its own Snowflake table.
+- There is no custom code to write or maintain. The connector handles it.
 
-Managed service cost is justified at this volume. Revisit at scale.
+<div class="callout">A managed connector costs more than writing our own script, but it is more reliable and there is nothing to maintain.</div>
 
 ---
 
 ### STORAGE
-## Snowflake
+## Snowflake holds it all
 
-| Schema | Role |
-|---|---|
-| `raw` | Fivetran landing tables — untouched |
-| `bronze` | Typed, renamed mirror of raw |
-| `silver` | Cleaned, deduplicated, joined |
-| `gold` | Production facts, dimensions, and views |
+The data lands in Snowflake and stays there through every stage of cleanup. We keep each stage, so any number on the dashboard can be traced back to the source.
 
-Storage and compute scale independently — materializing every layer is inexpensive. Access is role-controlled.
+- **Pay for what you use.** Storage and compute scale on their own.
+- **Plain SQL.** Analysts already know how to query it.
+- **Room to grow.** Payroll, HRIS, or survey data can be added later without redoing this work.
 
 ---
 
 ### TRANSFORMATION
-## dbt — bronze, silver, gold
+## dbt cleans and shapes it
 
 <div class="medallion">
   <div class="card bronze">
     <h4>BRONZE</h4>
     <div class="body">
-      <p>One-to-one with source</p>
+      <p>Make it readable</p>
       <ul>
-        <li>Renames + type casts</li>
-        <li>No filtering, no logic</li>
+        <li>Clear column names</li>
+        <li>Correct data types</li>
+        <li>Nothing dropped yet</li>
       </ul>
     </div>
   </div>
   <div class="card silver">
     <h4>SILVER</h4>
     <div class="body">
-      <p>Conformed entities</p>
+      <p>Make it correct</p>
       <ul>
-        <li>Drop nulls, dedupe</li>
-        <li>Parse dates, remove orphans</li>
-        <li>Join business entities</li>
+        <li>Remove blanks and duplicates</li>
+        <li>Parse dates, drop bad IDs</li>
+        <li>Join the pieces together</li>
       </ul>
     </div>
   </div>
   <div class="card gold">
     <h4>GOLD</h4>
     <div class="body">
-      <p>Production data mart</p>
+      <p>Make it usable</p>
       <ul>
-        <li>Star schema with contracts</li>
-        <li>Flat view for SQL/Excel</li>
+        <li>Analytics-ready tables</li>
+        <li>Plus a flat view for SQL</li>
       </ul>
     </div>
   </div>
 </div>
 
-Every model is version-controlled SQL with built-in tests and column-level lineage.
+Each step is plain SQL, version controlled and tested. Anyone can read the logic, and changes are safe to make.
 
 ---
 
-### CONSUMPTION
-## What analysts query
+### DECISIONS
+## Key decisions
+
+| Decision | Why it matters |
+|---|---|
+| Drop rows with unmatched IDs | So the counts are accurate. We track how many we dropped: about 77% of salary rows. |
+| A separate table for departments | The cleanest way to handle people on more than one team. |
+| A star schema **and** a flat view | Analysts want one shape, everyone else wants the other. Both come from the same data. |
+| Start recording history now | So we build a record of changes from day one, even before the source adds dates. |
+
+---
+
+### LIMITATIONS
+## What's missing
+
+| Gap | What it means today | What unlocks it |
+|---|---|---|
+| Department changes have no dates | We cannot tell which team someone was on when they left | Source adds dates |
+| Exit reasons are codes, not labels | The dashboard shows a code, not the reason | A lookup for the codes |
+| No location anywhere | We cannot break numbers down by office or region | Source adds location |
+| Salary and title are point in time | Shown as current only. No raises or promotions over time | Source adds history |
+
+Every gap is in the **source data**, not the pipeline. When the source improves, we can add these without a rebuild.
+
+---
+
+### QUALITY
+## Quality checks
+
+- **Tests** catch missing values, duplicates, and bad codes at every layer.
+- **Contracts** stop the build if the source changes shape, before bad data reaches the dashboard.
+- **History** is kept for tables that arrive without dates.
+- **Lineage** ties every dashboard field back to its source file.
+
+---
+
+### GOVERNANCE
+## Access and security
+
+The data holds names, pay, and departures, so we control who can see it.
+
+- **Role based access** in Snowflake. Analysts see the finished tables. The raw and in progress layers stay locked.
+- **Reviewed changes.** Every change is version controlled and approved before it takes effect.
+- **Traceable.** Lineage means any number can be traced back to its source.
+
+<div class="callout">Role based access covers who sees the data today. Masking individual fields like pay is the next step.</div>
+
+---
+
+### FOR ANALYSTS
+## How analysts use it
 
 <div class="two-col">
 <div>
 
 <h4>Star schema</h4>
 
-- `fct_employment` — 1 row per employee
-- `fct_employee_department` — bridge for multi-dept
-- `dim_employee`, `dim_department`, `dim_title`
-- `dim_exit_reason`, `dim_date`, `dim_generation`
+Tables built for Tableau. Break the numbers down by team, role, generation, or exit reason.
+
+<h4 style="margin-top:24px">Flat view</h4>
+
+`vw_employee_full`. One row per employee, everything joined. Open it in Excel or any SQL tool. No joins needed.
 
 </div>
 <div>
 
-<h4>Flat view</h4>
+<h4>Example: tenure by generation</h4>
 
-`vw_employee_full` — one row per employee, all attributes pre-joined. For Snowsight, Excel, ad-hoc SQL.
+```sql
+select generation_name,
+       round(avg(tenure_days)/365, 1)
+         as avg_years,
+       count_if(not is_active)
+         as departures
+from vw_employee_full
+group by generation_name
+order by departures desc;
+```
+
+One short query answers a real HR question. The same thing is point and click in Tableau.
 
 </div>
 </div>
 
 ---
 
-### QUALITY
-## Controls
+### IMPACT
+## What changed
 
-- **Tests** at every layer — `unique`, `not_null`, `accepted_values`, `relationships`
-- **Contracts** on gold — schema changes fail the build, not the dashboard
-- **Snapshots** capture history for source tables with no date columns
-- **CI** parses every PR before review
-- **Lineage docs** — every gold column traceable to a CSV row
-
----
-
-### LIMITATIONS
-## Source data gaps
-
-| Gap | Effect | Unlock |
-|---|---|---|
-| No dates on dept assignments | Cannot determine dept at exit | Source adds dates |
-| `exit_reason` is a raw code | Dashboard shows codes only | Source supplies decoder |
-| No location column | No geographic slicing | Source adds location |
-| Salary / title — one row, no date | Treated as current value | Source adds history |
-| ~77% of salary rows have unknown employee IDs | Affected rows excluded | Source fixes referential integrity |
-| Dates stored as 2-digit-year text | Year boundary requires handling | Source supplies ISO dates |
-
-All gaps are upstream. The pipeline absorbs source improvements without re-architecture.
-
----
-
-### DECISIONS
-## Choices and rationale
-
-| Decision | Rationale |
-|---|---|
-| Truncate-and-reload | One-time load. Incremental added when recurring. |
-| Inner-join to drop FK orphans | Preserves joined-fact integrity. Exclusion is quantified. |
-| Bridge fact for departments | Multi-dept assignments with no dates. |
-| Star schema **and** flat view | Tableau needs star; non-Tableau needs one-row-per-employee. |
-| Snapshots on undated tables | Forward-looking history from day one. |
-
----
-
-### ROADMAP
-## Next
-
-1. Schedule recurring sync (Fivetran + `dbt build`)
-2. Source freshness checks + alerting
-3. Salary and title history facts once source provides dates
-4. Location dimension if source adds it
-5. `analyst_role` provisioning in Snowflake
-6. Expand CI to warehouse-backed tiers
-
----
-
-### DISCUSSION
-## Anticipated questions
-
-<div class="two-col">
-<div>
-
-<h4>Business</h4>
-
-- Data freshness once recurring?
-- Operating cost at steady state?
-- Access controls?
-- Compliance / employee deletions?
-- Adding a new source system?
-
+<div class="recap">
+  <div class="col before">
+    <h4>Before</h4>
+    <ul>
+      <li>Numbers spread across seven files</li>
+      <li>Spreadsheets built by hand, one at a time</li>
+      <li>Totals that did not match</li>
+    </ul>
+  </div>
+  <div class="col after">
+    <h4>After</h4>
+    <ul>
+      <li>One source, queried directly</li>
+      <li>Which teams lose the most people</li>
+      <li>How long people stay, by role and generation</li>
+    </ul>
+  </div>
 </div>
-<div>
 
-<h4>Technical</h4>
+<div class="callout">HR can stop <strong>guessing</strong> about attrition and start <strong>acting</strong> on it.</div>
 
-- Grain of each fact?
-- SCD strategy?
-- Why drop orphans vs. retain with NULL?
-- CI tiers + test coverage?
-- 2-digit-year resolution?
+---
 
-</div>
-</div>
+### SUMMARY
+## Summary and next steps
+
+**Done.** A clean, tested dataset behind the dashboard, with access controlled and every number traceable.
+
+**Next, in order:**
+
+1. Fix the source data first: real dates, valid IDs, exit reason labels, and location
+2. Run the pipeline on a schedule so the dashboard updates on its own
+3. Add salary and promotion history once the source has it
+4. Mask sensitive fields and add a dedicated analyst role
 
 ---
 
 <!-- _class: cover -->
 <!-- _paginate: false -->
 
-<div class="kicker">Q&amp;A</div>
+<div class="kicker">DISCUSSION</div>
 
-# Thank you
+# Questions
 
 <div class="accent-bar"></div>
 
 <div class="sub">
 
 Source: github.com/georgegmathew12/av_employees
-Live dashboard: Tableau on Snowflake gold
+Live dashboard: Tableau, connected to Snowflake gold
 
 </div>
 
