@@ -23,14 +23,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
       - name: Render Marp → HTML + PDF
+        env:
+          CHROME_PATH: /usr/bin/google-chrome
         run: |
           mkdir -p site
-          docker run --rm --init -v "$PWD:/home/marp/app" -e LANG="$LANG" \
-            marpteam/marp-cli:latest slides.md \
+          npx --yes @marp-team/marp-cli@latest slides.md \
             -o site/index.html --html --allow-local-files
-          docker run --rm --init -v "$PWD:/home/marp/app" -e LANG="$LANG" \
-            marpteam/marp-cli:latest slides.md \
+          npx --yes @marp-team/marp-cli@latest slides.md \
             -o site/slides.pdf --pdf --allow-local-files
 
       - uses: actions/upload-pages-artifact@v3
