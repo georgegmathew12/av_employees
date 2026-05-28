@@ -2,6 +2,8 @@
 
 ELT pipeline for AV employee data.
 
+[**Presentation deck**](https://georgegmathew12.github.io/av_employees/) — slides walking through the pipeline (Fivetran → Snowflake → dbt) for HR + analyst audiences. Source: [`slides.md`](slides.md). Rebuilt automatically on every push to `main`.
+
 ## Architecture
 
 ```
