@@ -1,0 +1,48 @@
+name: Slides
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - slides.md
+      - .github/workflows/slides.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Render Marp → HTML + PDF
+        run: |
+          mkdir -p site
+          docker run --rm --init -v "$PWD:/home/marp/app" -e LANG="$LANG" \
+            marpteam/marp-cli:latest slides.md \
+            -o site/index.html --html --allow-local-files
+          docker run --rm --init -v "$PWD:/home/marp/app" -e LANG="$LANG" \
+            marpteam/marp-cli:latest slides.md \
+            -o site/slides.pdf --pdf --allow-local-files
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
