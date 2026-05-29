@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - slides.md
+      - presentation/slides.md
       - .github/workflows/slides.yml
   workflow_dispatch:
 
@@ -32,9 +32,9 @@ jobs:
           CHROME_PATH: /usr/bin/google-chrome
         run: |
           mkdir -p site
-          npx --yes @marp-team/marp-cli@latest slides.md \
+          npx --yes @marp-team/marp-cli@latest presentation/slides.md \
             -o site/index.html --html --allow-local-files
-          npx --yes @marp-team/marp-cli@latest slides.md \
+          npx --yes @marp-team/marp-cli@latest presentation/slides.md \
             -o site/slides.pdf --pdf --allow-local-files
 
       - uses: actions/upload-pages-artifact@v3
