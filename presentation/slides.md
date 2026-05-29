@@ -496,10 +496,10 @@ Each step is plain SQL, version controlled and tested. Anyone can read the logic
 
 | Decision | Why it matters |
 |---|---|
-| Drop rows with unmatched IDs | So the counts are accurate. We track how many we dropped: about 77% of salary rows. |
-| A separate table for departments | The cleanest way to handle people on more than one team. |
-| A star schema **and** a flat view | Analysts want one shape, everyone else wants the other. Both come from the same data. |
-| Start recording history now | So we build a record of changes from day one, even before the source adds dates. |
+| Drop rows with unmatched IDs | We only report on employees who exist in the data. About 77% of salary rows pointed to no one, so we left them out. |
+| A separate table for departments | The cleanest way to handle people who sit on more than one team. |
+| A star schema **and** a flat view | The star schema gives analysts clean, related tables to query. The flat view gives non-technical users one simple sheet of employment and departures. |
+| Start recording history now | The source has no dates, so a change would overwrite the old value. Snapshots capture each run and keep a history from now on. |
 
 ---
 
