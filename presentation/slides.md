@@ -348,7 +348,6 @@ style: |
 
 ---
 
-### AGENDA
 ## Agenda
 
 <div class="agenda">
