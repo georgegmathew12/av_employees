@@ -344,8 +344,6 @@ style: |
 
 <div class="accent-bar"></div>
 
-<div class="sub">The data behind the HR attrition dashboard.</div>
-
 <div class="meta">George Mathew  ·  May 29, 2026</div>
 
 ---
