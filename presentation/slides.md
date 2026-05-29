@@ -534,7 +534,6 @@ The data holds names, pay, and departures, so access matters.
 
 - **Layered by design.** The pipeline separates raw, in progress, and finished tables, ready for role based grants.
 - **Reviewed changes.** Every change is version controlled and approved before it takes effect.
-- **Traceable.** Lineage means any number can be traced back to its source.
 
 <div class="callout">Next: grant analysts access to the finished tables only, and mask sensitive fields like pay.</div>
 
