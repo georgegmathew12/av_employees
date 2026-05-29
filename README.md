@@ -2,11 +2,12 @@
 
 ELT pipeline for AV employee data.
 
-[**Presentation deck**](https://georgegmathew12.github.io/av_employees/) — slides walking through the pipeline (Fivetran → Snowflake → dbt) for HR + analyst audiences. Source: [`slides.md`](slides.md). Rebuilt automatically on every push to `main`.
+[**Presentation deck**](https://georgegmathew12.github.io/av_employees/) — slides walking through the pipeline (Fivetran → Snowflake → dbt) for HR + analyst audiences. Source: [`presentation/slides.md`](presentation/slides.md). Rebuilt automatically on every push to `main`.
 
 ### Editing the deck locally
 
 ```bash
+cd presentation
 npm install            # one-time, installs Marp into ./node_modules
 npm run preview        # live-reloading preview in your browser
 npm run build:html     # → slides.html
@@ -14,7 +15,7 @@ npm run build:pdf      # → slides.pdf
 npm run build:pptx     # → slides.pptx
 ```
 
-Edit `slides.md`. Preview updates on save. Push to `main` to publish.
+Edit `presentation/slides.md`. Preview updates on save. Push to `main` to publish.
 
 ## Architecture
 
@@ -29,8 +30,10 @@ CSVs (Google Drive) → Fivetran → Snowflake (raw) → dbt (bronze → silver 
 
 ```
 av_employees/
-├── fivetran/           # Connector config, source docs
-├── dbt/av_employees/   # dbt project (models, snapshots, macros, tests)
+├── src/
+│   ├── fivetran/           # Connector config, source docs
+│   └── dbt/av_employees/   # dbt project (models, snapshots, macros, tests)
+├── presentation/           # Marp deck (slides.md), notes, local tooling
 ├── pyproject.toml
 └── uv.lock
 ```
@@ -40,12 +43,12 @@ av_employees/
 Requires [uv](https://docs.astral.sh/uv/).
 
 1. `uv sync`
-2. `cp dbt/profiles.yml.example ~/.dbt/profiles.yml` — fill in Snowflake creds
-3. `cd dbt/av_employees && uv run dbt debug`
+2. `cp src/dbt/profiles.yml.example ~/.dbt/profiles.yml` — fill in Snowflake creds
+3. `cd src/dbt/av_employees && uv run dbt debug`
 
 ## Run
 
-From `dbt/av_employees/`:
+From `src/dbt/av_employees/`:
 
 ```bash
 uv run dbt deps              # install packages

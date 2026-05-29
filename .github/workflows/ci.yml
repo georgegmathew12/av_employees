@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: dbt/av_employees
+        working-directory: src/dbt/av_employees
     steps:
       - uses: actions/checkout@v4
 
