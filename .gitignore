@@ -28,6 +28,12 @@ venv/
 *.tfvars
 !*.tfvars.example
 
+# Node (slide tooling)
+node_modules/
+slides.html
+slides.pdf
+slides.pptx
+
 # OS / editor
 .DS_Store
 .vscode/
